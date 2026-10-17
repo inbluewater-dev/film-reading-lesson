@@ -8,3 +8,4 @@ playwright-report/
 # 서비스 계정 키·비밀값은 절대 커밋 금지
 *serviceAccount*.json
 tools/*.key.json
+data/compiled/

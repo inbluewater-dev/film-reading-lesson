@@ -32,7 +32,7 @@
 
 | 명령 | 내용 |
 |---|---|
-| `npm run compile:data` | `data/ttl/original/*.ttl` → `data/compiled/*.json` (스키마 검증 포함) |
+| `npm run compile:data` | `data/ttl/original/*.ttl` → `data/compiled/*.json` (스키마 검증 포함, `npm run dev`·`build` 때 자동 실행) |
 | `npm run report:ttl` | TTL 점검 리포트 생성 → `docs/reports/ttl-analysis.md` |
 | `npm test` | 단위 테스트 (Vitest) |
 | `npm run test:e2e` | 화면 테스트 (Playwright) |
