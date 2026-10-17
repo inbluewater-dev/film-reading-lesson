@@ -1,0 +1,252 @@
+@prefix rdfs: <http://www.w3.org/2000/01/rdf-schema#> .
+@prefix owl: <http://www.w3.org/2002/07/owl#> .
+@prefix xsd: <http://www.w3.org/2001/XMLSchema#> .
+@prefix ex: <http://example.org/reading#> .
+
+# Ontology Declaration
+ex:ReadingStrategyOntology a owl:Ontology ;
+    rdfs:label "독서기능, 독서전략, 독서과정 온톨로지"@ko ;
+    rdfs:comment "KNU 독서기능, 과정-기능 동사 및 해당 전략 매핑 데이터"@ko .
+
+# Classes
+ex:ReadingFunction a owl:Class ;
+    rdfs:label "핵심기능"@ko .
+
+ex:ReadingVerb a owl:Class ;
+    rdfs:label "과정-기능에 해당하는 동사"@ko .
+
+ex:ReadingStrategy a owl:Class ;
+    rdfs:label "해당 전략(대표 예시)"@ko .
+
+# Properties
+ex:hasVerb a owl:ObjectProperty ;
+    rdfs:domain ex:ReadingFunction ;
+    rdfs:range ex:ReadingVerb ;
+    rdfs:label "해당 동사를 가짐"@ko .
+
+ex:hasStrategy a owl:ObjectProperty ;
+    rdfs:domain ex:ReadingFunction ;
+    rdfs:range ex:ReadingStrategy ;
+    rdfs:label "해당 전략을 가짐"@ko .
+
+# Instances & Relationships
+
+# 1. 이해
+ex:Func_Understanding a ex:ReadingFunction ;
+    rdfs:label "이해"@ko ;
+    ex:hasVerb ex:Verb_이해하다, ex:Verb_파악하다, ex:Verb_설명하다, ex:Verb_의미를_연결하다, ex:Verb_해석하다 ;
+    ex:hasStrategy ex:Strat_단어의_나무, ex:Strat_낱말_접사_만들기, ex:Strat_손_그리기_활동, ex:Strat_감정표, ex:Strat_개념_정의_지도그리기, ex:Strat_LEAD_어휘연습, ex:Strat_밑줄_긋기, ex:Strat_빈칸_메우기, ex:Strat_중심생각_수레바퀴, ex:Strat_수학책을_읽는_열쇠 .
+
+# 2. 탐색
+ex:Func_Exploration a ex:ReadingFunction ;
+    rdfs:label "탐색"@ko ;
+    ex:hasVerb ex:Verb_살펴보다, ex:Verb_훑어보다, ex:Verb_질문하다, ex:Verb_조사하다, ex:Verb_예상하다, ex:Verb_찾아보다 ;
+    ex:hasStrategy ex:Strat_SQ3R, ex:Strat_과학책_훑어보기, ex:Strat_미리보기, ex:Strat_앙케이트_질문표, ex:Strat_밑줄_긋기, ex:Strat_질문의_답은_어디에_QAR, ex:Strat_KWL .
+
+# 3. 추론
+ex:Func_Inference a ex:ReadingFunction ;
+    rdfs:label "추론"@ko ;
+    ex:hasVerb ex:Verb_추리하다, ex:Verb_유추하다, ex:Verb_근거를_찾다, ex:Verb_맥락을_파악하다, ex:Verb_숨은_의미를_발견하다 ;
+    ex:hasStrategy ex:Strat_질문의_답은_어디에_QAR, ex:Strat_정교한_질문, ex:Strat_실마리_낱말로_유추하기, ex:Strat_빈칸_메우기, ex:Strat_경계_어휘전략, ex:Strat_예측_안내하기, ex:Strat_A_QU_A .
+
+# 4. 예측
+ex:Func_Prediction a ex:ReadingFunction ;
+    rdfs:label "예측"@ko ;
+    ex:hasVerb ex:Verb_예상하다, ex:Verb_가정하다, ex:Verb_전망하다, ex:Verb_추측하다, ex:Verb_미리_생각하다 ;
+    ex:hasStrategy ex:Strat_어휘_예상하기, ex:Strat_예측_안내하기, ex:Strat_사진_속으로, ex:Strat_상상_속으로, ex:Strat_KWL, ex:Strat_실마리_낱말로_유추하기, ex:Strat_미리보기 .
+
+# 5. 비교
+ex:Func_Comparison a ex:ReadingFunction ;
+    rdfs:label "비교"@ko ;
+    ex:hasVerb ex:Verb_비교하다, ex:Verb_공통점을_찾다, ex:Verb_유사성을_분석하다, ex:Verb_연결하다 ;
+    ex:hasStrategy ex:Strat_벤다이어그램, ex:Strat_의미자질_분석하기, ex:Strat_대조표, ex:Strat_대립_척도표 .
+
+# 6. 대조
+ex:Func_Contrast a ex:ReadingFunction ;
+    rdfs:label "대조"@ko ;
+    ex:hasVerb ex:Verb_대비하다, ex:Verb_차이점을_찾다, ex:Verb_구별하다, ex:Verb_구분하다 ;
+    ex:hasStrategy ex:Strat_대조표, ex:Strat_벤다이어그램, ex:Strat_의미자질_분석하기, ex:Strat_대립_척도표 .
+
+# 7. 분류
+ex:Func_Classification a ex:ReadingFunction ;
+    rdfs:label "분류"@ko ;
+    ex:hasVerb ex:Verb_나누다, ex:Verb_범주화하다, ex:Verb_묶다, ex:Verb_유형화하다, ex:Verb_체계화하다 ;
+    ex:hasStrategy ex:Strat_단어_분류하기, ex:Strat_의미자질_분석하기, ex:Strat_피라미드_다이어그램, ex:Strat_닿소리표_그리기, ex:Strat_낱말_접사_만들기 .
+
+# 8. 관계화
+ex:Func_Relation a ex:ReadingFunction ;
+    rdfs:label "관계화"@ko ;
+    ex:hasVerb ex:Verb_연결하다, ex:Verb_관련짓다, ex:Verb_구조화하다, ex:Verb_흐름을_파악하다, ex:Verb_맥락화하다 ;
+    ex:hasStrategy ex:Strat_역사의_흐름_파악하기, ex:Strat_플롯_조직표, ex:Strat_이야기_지도_그리기, ex:Strat_의미_구조도_그리기, ex:Strat_인물망, ex:Strat_생각_그물, ex:Strat_상호텍스트_전략 .
+
+# 9. 분석
+ex:Func_Analysis a ex:ReadingFunction ;
+    rdfs:label "분석"@ko ;
+    ex:hasVerb ex:Verb_분석하다, ex:Verb_분해하다, ex:Verb_구조를_파악하다, ex:Verb_원인을_찾다, ex:Verb_검토하다 ;
+    ex:hasStrategy ex:Strat_글_구조_전략, ex:Strat_오류_찾기, ex:Strat_단어_유래_찾기, ex:Strat_인물지도, ex:Strat_상호텍스트_전략, ex:Strat_수학책을_읽는_열쇠 .
+
+# 10. 종합
+ex:Func_Synthesis a ex:ReadingFunction ;
+    rdfs:label "종합"@ko ;
+    ex:hasVerb ex:Verb_종합하다, ex:Verb_통합하다, ex:Verb_요약하다, ex:Verb_재구성하다, ex:Verb_핵심화하다 ;
+    ex:hasStrategy ex:Strat_요약하기, ex:Strat_자석_요약하기, ex:Strat_의미지도_그리기, ex:Strat_중심생각_수레바퀴, ex:Strat_생각_그물, ex:Strat_문학지도, ex:Strat_피라미드_다이어그램 .
+
+# 11. 평가
+ex:Func_Evaluation a ex:ReadingFunction ;
+    rdfs:label "평가"@ko ;
+    ex:hasVerb ex:Verb_판단하다, ex:Verb_비판하다, ex:Verb_검증하다, ex:Verb_근거를_따지다, ex:Verb_가치화하다 ;
+    ex:hasStrategy ex:Strat_오류_찾기, ex:Strat_참_거짓_가리기, ex:Strat_대립_척도표, ex:Strat_상호텍스트_전략, ex:Strat_복식_기재_일지 .
+
+# 12. 적용
+ex:Func_Application a ex:ReadingFunction ;
+    rdfs:label "적용"@ko ;
+    ex:hasVerb ex:Verb_활용하다, ex:Verb_적용하다, ex:Verb_실행하다, ex:Verb_실천하다, ex:Verb_전이하다 ;
+    ex:hasStrategy ex:Strat_RAFT, ex:Strat_수학책을_읽는_열쇠, ex:Strat_LEAD_어휘연습, ex:Strat_인물_따라하기 .
+
+# 13. 창안
+ex:Func_Creation a ex:ReadingFunction ;
+    rdfs:label "창안"@ko ;
+    ex:hasVerb ex:Verb_창조하다, ex:Verb_상상하다, ex:Verb_구안하다, ex:Verb_발명하다, ex:Verb_생성하다 ;
+    ex:hasStrategy ex:Strat_브레인스토밍, ex:Strat_가능한_문장_만들기, ex:Strat_상상_속으로, ex:Strat_RAFT, ex:Strat_사진_속으로 .
+
+# 14. 표현
+ex:Func_Expression a ex:ReadingFunction ;
+    rdfs:label "표현"@ko ;
+    ex:hasVerb ex:Verb_표현하다, ex:Verb_말하다, ex:Verb_서술하다, ex:Verb_재현하다, ex:Verb_발표하다 ;
+    ex:hasStrategy ex:Strat_다시_이야기하기, ex:Strat_인물_인용하기, ex:Strat_인물_따라하기, ex:Strat_RAFT, ex:Strat_문학지도, ex:Strat_손_그리기_활동 .
+
+# 15. 조절(메타인지)
+ex:Func_Regulation a ex:ReadingFunction ;
+    rdfs:label "조절(메타인지)"@ko ;
+    ex:hasVerb ex:Verb_점검하다, ex:Verb_반성하다, ex:Verb_계획하다, ex:Verb_조정하다, ex:Verb_성찰하다 ;
+    ex:hasStrategy ex:Strat_KWL, ex:Strat_SQ3R, ex:Strat_복식_기재_일지, ex:Strat_A_QU_A, ex:Strat_정교한_질문 .
+
+
+# Verbs Definitions (RDF Types)
+ex:Verb_이해하다 a ex:ReadingVerb ; rdfs:label "이해하다"@ko .
+ex:Verb_파악하다 a ex:ReadingVerb ; rdfs:label "파악하다"@ko .
+ex:Verb_설명하다 a ex:ReadingVerb ; rdfs:label "설명하다"@ko .
+ex:Verb_의미를_연결하다 a ex:ReadingVerb ; rdfs:label "의미를 연결하다"@ko .
+ex:Verb_해석하다 a ex:ReadingVerb ; rdfs:label "해석하다"@ko .
+ex:Verb_살펴보다 a ex:ReadingVerb ; rdfs:label "살펴보다"@ko .
+ex:Verb_훑어보다 a ex:ReadingVerb ; rdfs:label "훑어보다"@ko .
+ex:Verb_질문하다 a ex:ReadingVerb ; rdfs:label "질문하다"@ko .
+ex:Verb_조사하다 a ex:ReadingVerb ; rdfs:label "조사하다"@ko .
+ex:Verb_예상하다 a ex:ReadingVerb ; rdfs:label "예상하다"@ko .
+ex:Verb_찾아보다 a ex:ReadingVerb ; rdfs:label "찾아보다"@ko .
+ex:Verb_추리하다 a ex:ReadingVerb ; rdfs:label "추리하다"@ko .
+ex:Verb_유추하다 a ex:ReadingVerb ; rdfs:label "유추하다"@ko .
+ex:Verb_근거를_찾다 a ex:ReadingVerb ; rdfs:label "근거를 찾다"@ko .
+ex:Verb_맥락을_파악하다 a ex:ReadingVerb ; rdfs:label "맥락을 파악하다"@ko .
+ex:Verb_숨은_의미를_발견하다 a ex:ReadingVerb ; rdfs:label "숨은 의미를 발견하다"@ko .
+ex:Verb_가정하다 a ex:ReadingVerb ; rdfs:label "가정하다"@ko .
+ex:Verb_전망하다 a ex:ReadingVerb ; rdfs:label "전망하다"@ko .
+ex:Verb_추측하다 a ex:ReadingVerb ; rdfs:label "추측하다"@ko .
+ex:Verb_미리_생각하다 a ex:ReadingVerb ; rdfs:label "미리 생각하다"@ko .
+ex:Verb_비교하다 a ex:ReadingVerb ; rdfs:label "비교하다"@ko .
+ex:Verb_공통점을_찾다 a ex:ReadingVerb ; rdfs:label "공통점을 찾다"@ko .
+ex:Verb_유사성을_분석하다 a ex:ReadingVerb ; rdfs:label "유사성을 분석하다"@ko .
+ex:Verb_연결하다 a ex:ReadingVerb ; rdfs:label "연결하다"@ko .
+ex:Verb_대비하다 a ex:ReadingVerb ; rdfs:label "대비하다"@ko .
+ex:Verb_차이점을_찾다 a ex:ReadingVerb ; rdfs:label "차이점을 찾다"@ko .
+ex:Verb_구별하다 a ex:ReadingVerb ; rdfs:label "구별하다"@ko .
+ex:Verb_구분하다 a ex:ReadingVerb ; rdfs:label "구분하다"@ko .
+ex:Verb_나누다 a ex:ReadingVerb ; rdfs:label "나누다"@ko .
+ex:Verb_범주화하다 a ex:ReadingVerb ; rdfs:label "범주화하다"@ko .
+ex:Verb_묶다 a ex:ReadingVerb ; rdfs:label "묶다"@ko .
+ex:Verb_유형화하다 a ex:ReadingVerb ; rdfs:label "유형화하다"@ko .
+ex:Verb_체계화하다 a ex:ReadingVerb ; rdfs:label "체계화하다"@ko .
+ex:Verb_관련짓다 a ex:ReadingVerb ; rdfs:label "관련짓다"@ko .
+ex:Verb_구조화하다 a ex:ReadingVerb ; rdfs:label "구조화하다"@ko .
+ex:Verb_흐름을_파악하다 a ex:ReadingVerb ; rdfs:label "흐름을 파악하다"@ko .
+ex:Verb_맥락화하다 a ex:ReadingVerb ; rdfs:label "맥락화하다"@ko .
+ex:Verb_분석하다 a ex:ReadingVerb ; rdfs:label "분석하다"@ko .
+ex:Verb_분해하다 a ex:ReadingVerb ; rdfs:label "분해하다"@ko .
+ex:Verb_구조를_파악하다 a ex:ReadingVerb ; rdfs:label "구조를 파악하다"@ko .
+ex:Verb_원인을_찾다 a ex:ReadingVerb ; rdfs:label "원인을 찾다"@ko .
+ex:Verb_검토하다 a ex:ReadingVerb ; rdfs:label "검토하다"@ko .
+ex:Verb_종합하다 a ex:ReadingVerb ; rdfs:label "종합하다"@ko .
+ex:Verb_통합하다 a ex:ReadingVerb ; rdfs:label "통합하다"@ko .
+ex:Verb_요약하다 a ex:ReadingVerb ; rdfs:label "요약하다"@ko .
+ex:Verb_재구성하다 a ex:ReadingVerb ; rdfs:label "재구성하다"@ko .
+ex:Verb_핵심화하다 a ex:ReadingVerb ; rdfs:label "핵심화하다"@ko .
+ex:Verb_판단하다 a ex:ReadingVerb ; rdfs:label "판단하다"@ko .
+ex:Verb_비판하다 a ex:ReadingVerb ; rdfs:label "비판하다"@ko .
+ex:Verb_검증하다 a ex:ReadingVerb ; rdfs:label "검증하다"@ko .
+ex:Verb_근거를_따지다 a ex:ReadingVerb ; rdfs:label "근거를 따지다"@ko .
+ex:Verb_가치화하다 a ex:ReadingVerb ; rdfs:label "가치화하다"@ko .
+ex:Verb_활용하다 a ex:ReadingVerb ; rdfs:label "활용하다"@ko .
+ex:Verb_실행하다 a ex:ReadingVerb ; rdfs:label "실행하다"@ko .
+ex:Verb_실천하다 a ex:ReadingVerb ; rdfs:label "실천하다"@ko .
+ex:Verb_전이하다 a ex:ReadingVerb ; rdfs:label "전이하다"@ko .
+ex:Verb_창조하다 a ex:ReadingVerb ; rdfs:label "창조하다"@ko .
+ex:Verb_상상하다 a ex:ReadingVerb ; rdfs:label "상상하다"@ko .
+ex:Verb_구안하다 a ex:ReadingVerb ; rdfs:label "구안하다"@ko .
+ex:Verb_발명하다 a ex:ReadingVerb ; rdfs:label "발명하다"@ko .
+ex:Verb_생성하다 a ex:ReadingVerb ; rdfs:label "생성하다"@ko .
+ex:Verb_표현하다 a ex:ReadingVerb ; rdfs:label "표현하다"@ko .
+ex:Verb_말하다 a ex:ReadingVerb ; rdfs:label "말하다"@ko .
+ex:Verb_서술하다 a ex:ReadingVerb ; rdfs:label "서술하다"@ko .
+ex:Verb_재현하다 a ex:ReadingVerb ; rdfs:label "재현하다"@ko .
+ex:Verb_발표하다 a ex:ReadingVerb ; rdfs:label "발표하다"@ko .
+ex:Verb_점검하다 a ex:ReadingVerb ; rdfs:label "점검하다"@ko .
+ex:Verb_반성하다 a ex:ReadingVerb ; rdfs:label "반성하다"@ko .
+ex:Verb_계획하다 a ex:ReadingVerb ; rdfs:label "계획하다"@ko .
+ex:Verb_조정하다 a ex:ReadingVerb ; rdfs:label "조정하다"@ko .
+ex:Verb_성찰하다 a ex:ReadingVerb ; rdfs:label "성찰하다"@ko .
+
+# Strategy Definitions (RDF Types)
+ex:Strat_단어의_나무 a ex:ReadingStrategy ; rdfs:label "단어의 나무"@ko .
+ex:Strat_낱말_접사_만들기 a ex:ReadingStrategy ; rdfs:label "낱말 접사 만들기"@ko .
+ex:Strat_손_그리기_활동 a ex:ReadingStrategy ; rdfs:label "손 그리기 활동"@ko .
+ex:Strat_감정표 a ex:ReadingStrategy ; rdfs:label "감정표"@ko .
+ex:Strat_개념_정의_지도그리기 a ex:ReadingStrategy ; rdfs:label "개념 정의 지도그리기"@ko .
+ex:Strat_LEAD_어휘연습 a ex:ReadingStrategy ; rdfs:label "LEAD 어휘연습"@ko .
+ex:Strat_밑줄_긋기 a ex:ReadingStrategy ; rdfs:label "밑줄 긋기"@ko .
+ex:Strat_빈칸_메우기 a ex:ReadingStrategy ; rdfs:label "빈칸 메우기"@ko .
+ex:Strat_중심생각_수레바퀴 a ex:ReadingStrategy ; rdfs:label "중심생각 수레바퀴"@ko .
+ex:Strat_수학책을_읽는_열쇠 a ex:ReadingStrategy ; rdfs:label "수학책을 읽는 열쇠"@ko .
+ex:Strat_SQ3R a ex:ReadingStrategy ; rdfs:label "SQ3R"@ko .
+ex:Strat_과학책_훑어보기 a ex:ReadingStrategy ; rdfs:label "과학책 훑어보기"@ko .
+ex:Strat_미리보기 a ex:ReadingStrategy ; rdfs:label "미리보기"@ko .
+ex:Strat_앙케이트_질문표 a ex:ReadingStrategy ; rdfs:label "앙케이트/질문표"@ko .
+ex:Strat_질문의_답은_어디에_QAR a ex:ReadingStrategy ; rdfs:label "질문의 답은 어디에(QAR)"@ko .
+ex:Strat_KWL a ex:ReadingStrategy ; rdfs:label "KWL"@ko .
+ex:Strat_정교한_질문 a ex:ReadingStrategy ; rdfs:label "정교한 질문"@ko .
+ex:Strat_실마리_낱말로_유추하기 a ex:ReadingStrategy ; rdfs:label "실마리 낱말로 유추하기"@ko .
+ex:Strat_경계_어휘전략 a ex:ReadingStrategy ; rdfs:label "경계 어휘전략"@ko .
+ex:Strat_예측_안내하기 a ex:ReadingStrategy ; rdfs:label "예측 안내하기"@ko .
+ex:Strat_A_QU_A a ex:ReadingStrategy ; rdfs:label "A-QU-A"@ko .
+ex:Strat_어휘_예상하기 a ex:ReadingStrategy ; rdfs:label "어휘 예상하기"@ko .
+ex:Strat_사진_속으로 a ex:ReadingStrategy ; rdfs:label "사진 속으로"@ko .
+ex:Strat_상상_속으로 a ex:ReadingStrategy ; rdfs:label "상상 속으로"@ko .
+ex:Strat_벤다이어그램 a ex:ReadingStrategy ; rdfs:label "벤다이어그램"@ko .
+ex:Strat_의미자질_분석하기 a ex:ReadingStrategy ; rdfs:label "의미자질 분석하기"@ko .
+ex:Strat_대조표 a ex:ReadingStrategy ; rdfs:label "대조표"@ko .
+ex:Strat_대립_척도표 a ex:ReadingStrategy ; rdfs:label "대립 척도표"@ko .
+ex:Strat_단어_분류하기 a ex:ReadingStrategy ; rdfs:label "단어 분류하기"@ko .
+ex:Strat_피라미드_다이어그램 a ex:ReadingStrategy ; rdfs:label "피라미드 다이어그램"@ko .
+ex:Strat_닿소리표_그리기 a ex:ReadingStrategy ; rdfs:label "닿소리표 그리기"@ko .
+ex:Strat_역사의_흐름_파악하기 a ex:ReadingStrategy ; rdfs:label "역사의 흐름 파악하기"@ko .
+ex:Strat_플롯_조직표 a ex:ReadingStrategy ; rdfs:label "플롯 조직표"@ko .
+ex:Strat_이야기_지도_그리기 a ex:ReadingStrategy ; rdfs:label "이야기 지도 그리기"@ko .
+ex:Strat_의미_구조도_그리기 a ex:ReadingStrategy ; rdfs:label "의미 구조도 그리기"@ko .
+ex:Strat_인물망 a ex:ReadingStrategy ; rdfs:label "인물망"@ko .
+ex:Strat_생각_그물 a ex:ReadingStrategy ; rdfs:label "생각 그물"@ko .
+ex:Strat_상호텍스트_전략 a ex:ReadingStrategy ; rdfs:label "상호텍스트 전략"@ko .
+ex:Strat_글_구조_전략 a ex:ReadingStrategy ; rdfs:label "글 구조 전략"@ko .
+ex:Strat_오류_찾기 a ex:ReadingStrategy ; rdfs:label "오류 찾기"@ko .
+ex:Strat_단어_유래_찾기 a ex:ReadingStrategy ; rdfs:label "단어 유래 찾기"@ko .
+ex:Strat_인물지도 a ex:ReadingStrategy ; rdfs:label "인물지도"@ko .
+ex:Strat_요약하기 a ex:ReadingStrategy ; rdfs:label "요약하기"@ko .
+ex:Strat_자석_요약하기 a ex:ReadingStrategy ; rdfs:label "자석 요약하기"@ko .
+ex:Strat_의미지도_그리기 a ex:ReadingStrategy ; rdfs:label "의미지도 그리기"@ko .
+ex:Strat_문학지도 a ex:ReadingStrategy ; rdfs:label "문학지도"@ko .
+ex:Strat_참_거짓_가리기 a ex:ReadingStrategy ; rdfs:label "참/거짓 가리기"@ko .
+ex:Strat_복식_기재_일지 a ex:ReadingStrategy ; rdfs:label "복식 기재 일지"@ko .
+ex:Strat_RAFT a ex:ReadingStrategy ; rdfs:label "RAFT"@ko .
+ex:Strat_인물_따라하기 a ex:ReadingStrategy ; rdfs:label "인물 따라하기"@ko .
+ex:Strat_브레인스토밍 a ex:ReadingStrategy ; rdfs:label "브레인스토밍"@ko .
+ex:Strat_가능한_문장_만들기 a ex:ReadingStrategy ; rdfs:label "가능한 문장 만들기"@ko .
+ex:Strat_다시_이야기하기 a ex:ReadingStrategy ; rdfs:label "다시 이야기하기"@ko .
+ex:Strat_인물_인용하기 a ex:ReadingStrategy ; rdfs:label "인물 인용하기"@ko .

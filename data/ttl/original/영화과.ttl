@@ -1,0 +1,556 @@
+@prefix ex:   <https://example.org/curriculum/film#> .
+@prefix rs:   <http://example.org/reading#> .
+@prefix rdf:  <http://www.w3.org/1999/02/22-rdf-syntax-ns#> .
+@prefix rdfs: <http://www.w3.org/2000/01/rdf-schema#> .
+@prefix owl:  <http://www.w3.org/2002/07/owl#> .
+@prefix xsd:  <http://www.w3.org/2001/XMLSchema#> .
+@prefix dc:   <http://purl.org/dc/elements/1.1/> .
+
+# 고등학교 영화 교과(이론·감상 3과목) 교육과정의 RDF/RDFS/OWL 구조화 — 사회과.ttl 구조 + 성취기준 확장(가이드 §5.1)
+# 출처: 교육부 고시 제2022-33호 [별책 22] 예술 계열 선택 교과 교육과정 — [영화]
+#   <영화의 이해>(진로 선택, p.411~420), <영화 감상과 비평>(진로 선택, p.453~461), <영화와 삶>(융합 선택, p.462~470)
+# 핵심 아이디어·내용 요소·성취기준·성취기준 해설·적용 시 고려 사항은 원문을 요약하지 않고 그대로 옮김
+# 국가 교육과정에는 '단원'이 없으므로 성취기준은 내용 영역(LearningArea)에 직접 연결함
+# targetVerb: 성취기준 문장 끝 동사의 기본형(기계적 추출). targetFunction(독서 기능 연결)은 관리자가 지정하도록 비워 둠
+# RDF: 교과·영역·핵심 아이디어·내용 요소·성취기준의 사실 관계를 triple로 표현
+# RDFS: 클래스와 속성의 의미, domain/range, 하위 클래스 정의
+# OWL: 클래스 간 배타성과 교과 영역 수에 대한 제약을 표현
+
+ex:FilmCurriculum a owl:Ontology ;
+    dc:title "2022 개정 고등학교 영화 교과(영화의 이해, 영화 감상과 비평, 영화와 삶) 교육과정 구조화"@ko ;
+    dc:source "교육부 고시 제2022-33호 [별책 22] 예술 계열 선택 교과 교육과정 (영화 교과)"@ko ;
+    dc:description "교육과정 원문에 제시된 영역, 핵심 아이디어, 내용 요소(지식·이해, 과정·기능, 가치·태도), 성취기준(해설·적용 시 고려 사항 포함) 및 영화 교과 핵심역량을 RDF/RDFS/OWL로 표현"@ko .
+
+# --- RDFS: 클래스 정의 ---
+ex:Curriculum a owl:Class ; rdfs:label "교육과정"@ko .
+ex:Subject a owl:Class ; rdfs:subClassOf ex:Curriculum ; rdfs:label "교과"@ko .
+ex:LearningArea a owl:Class ; rdfs:label "내용 영역"@ko .
+ex:CoreIdea a owl:Class ; rdfs:label "핵심 아이디어"@ko .
+ex:ContentElement a owl:Class ; rdfs:label "내용 요소"@ko .
+ex:Competency a owl:Class ; rdfs:label "역량"@ko .
+ex:ProcessSkill a owl:Class ; rdfs:subClassOf ex:ContentElement ; rdfs:label "과정·기능"@ko .
+ex:ValueAttitude a owl:Class ; rdfs:subClassOf ex:ContentElement ; rdfs:label "가치·태도"@ko .
+ex:KnowledgeUnderstanding a owl:Class ; rdfs:subClassOf ex:ContentElement ; rdfs:label "지식·이해"@ko .
+ex:AchievementStandard a owl:Class ; rdfs:label "성취기준"@ko .
+
+ex:hasArea a owl:ObjectProperty ;
+    rdfs:domain ex:Subject ; rdfs:range ex:LearningArea ; rdfs:label "포함 영역"@ko .
+ex:hasCoreIdea a owl:ObjectProperty ;
+    rdfs:domain ex:LearningArea ; rdfs:range ex:CoreIdea ; rdfs:label "핵심 아이디어"@ko .
+ex:hasContentElement a owl:ObjectProperty ;
+    rdfs:domain ex:LearningArea ; rdfs:range ex:ContentElement ; rdfs:label "내용 요소"@ko .
+ex:developsCompetency a owl:ObjectProperty ;
+    rdfs:domain ex:Subject ; rdfs:range ex:Competency ; rdfs:label "함양 역량"@ko .
+ex:relatedToArea a owl:ObjectProperty ;
+    rdfs:domain ex:LearningArea ; rdfs:range ex:LearningArea ; rdfs:label "관련 영역"@ko .
+ex:gradeBand a owl:DatatypeProperty ;
+    rdfs:domain ex:ContentElement ; rdfs:range xsd:string ; rdfs:label "학년군"@ko .
+ex:description a owl:DatatypeProperty ;
+    rdfs:range xsd:string ; rdfs:label "설명"@ko .
+ex:courseCategory a owl:DatatypeProperty ;
+    rdfs:domain ex:Subject ; rdfs:range xsd:string ; rdfs:label "교육과정 구분"@ko .
+
+# --- 성취기준 확장 (가이드 §5.1, '단원' 대신 영역에 연결) ---
+ex:hasStandard a owl:ObjectProperty ;
+    rdfs:domain ex:LearningArea ; rdfs:range ex:AchievementStandard ; rdfs:label "성취기준"@ko .
+ex:standardCode a owl:DatatypeProperty ;
+    rdfs:domain ex:AchievementStandard ; rdfs:range xsd:string ; rdfs:label "성취기준 코드"@ko .
+ex:standardText a owl:DatatypeProperty ;
+    rdfs:domain ex:AchievementStandard ; rdfs:range xsd:string ; rdfs:label "성취기준 원문"@ko .
+ex:standardExplanation a owl:DatatypeProperty ;
+    rdfs:domain ex:AchievementStandard ; rdfs:range xsd:string ; rdfs:label "성취기준 해설"@ko .
+ex:applicationNote a owl:DatatypeProperty ;
+    rdfs:domain ex:LearningArea ; rdfs:range xsd:string ; rdfs:label "성취기준 적용 시 고려 사항"@ko .
+ex:targetVerb a owl:DatatypeProperty ;
+    rdfs:domain ex:AchievementStandard ; rdfs:range xsd:string ; rdfs:label "성취기준 핵심 동사"@ko .
+ex:targetFunction a owl:ObjectProperty ;
+    rdfs:domain ex:AchievementStandard ; rdfs:range rs:ReadingFunction ; rdfs:label "연결 독서 기능"@ko .
+ex:coversElement a owl:ObjectProperty ;
+    rdfs:domain ex:AchievementStandard ; rdfs:range ex:ContentElement ; rdfs:label "관련 내용 요소"@ko .
+
+# --- OWL: 의미 제약 및 관계 ---
+ex:LearningArea owl:disjointWith ex:CoreIdea, ex:ContentElement, ex:Competency, ex:AchievementStandard .
+ex:CoreIdea owl:disjointWith ex:ContentElement, ex:Competency, ex:AchievementStandard .
+ex:AchievementStandard owl:disjointWith ex:ContentElement, ex:Competency .
+ex:KnowledgeUnderstanding owl:disjointWith ex:ProcessSkill, ex:ValueAttitude .
+ex:ProcessSkill owl:disjointWith ex:ValueAttitude .
+
+ex:FilmUnderstandingSubject a owl:Class ;
+    rdfs:subClassOf ex:Subject ,
+      [ a owl:Restriction ; owl:onProperty ex:hasArea ;
+        owl:qualifiedCardinality "3"^^xsd:nonNegativeInteger ;
+        owl:onClass ex:LearningArea ] .
+ex:FilmAppreciationCriticismSubject a owl:Class ;
+    rdfs:subClassOf ex:Subject ,
+      [ a owl:Restriction ; owl:onProperty ex:hasArea ;
+        owl:qualifiedCardinality "2"^^xsd:nonNegativeInteger ;
+        owl:onClass ex:LearningArea ] .
+ex:FilmAndLifeSubject a owl:Class ;
+    rdfs:subClassOf ex:Subject ,
+      [ a owl:Restriction ; owl:onProperty ex:hasArea ;
+        owl:qualifiedCardinality "3"^^xsd:nonNegativeInteger ;
+        owl:onClass ex:LearningArea ] .
+
+# --- 영화 교과 핵심역량 ---
+# 원문(각 과목 교수·학습 방법): "영화 교과의 핵심역량인 창의적 사고 능력, 영화적 상상력, 협업 능력, 영화적 표현력, 자기 관리 능력, 문제 해결 능력, 예술 향유 능력을 함양하는 데 중점을 둔다."
+ex:CreativeThinking a ex:Competency ; rdfs:label "창의적 사고 능력"@ko .
+ex:CinematicImagination a ex:Competency ; rdfs:label "영화적 상상력"@ko .
+ex:Collaboration a ex:Competency ; rdfs:label "협업 능력"@ko .
+ex:CinematicExpression a ex:Competency ; rdfs:label "영화적 표현력"@ko .
+ex:SelfManagement a ex:Competency ; rdfs:label "자기 관리 능력"@ko .
+ex:ProblemSolving a ex:Competency ; rdfs:label "문제 해결 능력"@ko .
+ex:ArtEnjoyment a ex:Competency ; rdfs:label "예술 향유 능력"@ko .
+
+# =====================================================================
+# [진로 선택 과목] 영화의 이해 — 원문 p.411~420
+# =====================================================================
+ex:FilmUnderstanding a ex:Subject, ex:FilmUnderstandingSubject ;
+    rdfs:label "영화의 이해"@ko ;
+    ex:courseCategory "진로 선택 과목"@ko ;
+    ex:description "<영화의 이해>는 영화의 기초적인 개념과 역사에 대한 학습을 통해 영화의 특성을 이해하고 영화적 사고와 표현, 더 나아가 영화 창작의 이론적 기틀을 마련하는 과목이다."@ko ;
+    ex:hasArea ex:FilmCharacteristics, ex:FilmComponents, ex:FilmHistory ;
+    ex:developsCompetency ex:CreativeThinking, ex:CinematicImagination, ex:Collaboration, ex:CinematicExpression, ex:SelfManagement, ex:ProblemSolving, ex:ArtEnjoyment .
+
+# --- 영역: 영화의 특성 ---
+ex:FilmCharacteristics a ex:LearningArea ;
+    rdfs:label "영화의 특성"@ko ;
+    ex:description "영화의 개념과 영화의 종류에 대한 이해를 바탕으로 ‘영화란 무엇인가’에 대해 고찰하고 영화를 분석하는 능력을 키우게 되며 아울러 영화의 특성에 대한 파악을 통해 영화와 다른 예술, 기술 분야와의 관계에 대해서도 살펴볼 수 있도록 한다."@ko ;
+    ex:hasCoreIdea ex:DiverseViewsOfFilmCoreIdea, ex:FilmAsSyntheticArtCoreIdea ;
+    ex:hasContentElement ex:ConceptOfFilm, ex:FilmOtherArtsTechnology, ex:FilmAndIndustry, ex:TypesOfFilm,
+        ex:ExploreFilmCharacteristics, ex:ExamineFormDifferences, ex:AnalyzeVideoMediaDifferences, ex:OpenToFilmValues,
+        ex:ActivelyEnjoyFilm, ex:RespectDiversityOfExpression ;
+    ex:hasStandard ex:FilmUnderstandingStd01_01, ex:FilmUnderstandingStd01_02, ex:FilmUnderstandingStd01_03, ex:FilmUnderstandingStd01_04, ex:FilmUnderstandingStd01_05 ;
+    ex:applicationNote "영화라는 매체에 대한 단순한 개념학습에서 나아가 예술로서의 영화에 대한 폭넓은 이해를 통해 사회와 현상을 바라보는 시야를 넓힐 수 있도록 지도한다."@ko ,
+        "다양한 시청각 자료와 매체, 영화 작품 등을 적극적으로 활용하여 수업에 역동성을 부여하고 학생들의 호기심을 고취시키고 관심을 끌어내도록 한다."@ko ,
+        "학생의 진로와 관심 분야, 현재 사회적 이슈와 관련이 있는 영화를 다채롭게 학습 자료로 제공하여 학습자가 능동적으로 학습에 참여할 수 있도록 지도한다."@ko ,
+        "하나의 장르나 주제 등에 치우치지 않고 다양한 장르와 특성의 영화를 골고루 제공하여 학습자가 열린 마음으로 삶을 바라볼 수 있도록 돕는다."@ko ,
+        "영상 매체의 특징에 대한 이해를 통해, 현대 사회의 다양한 영상물을 무분별하게 수용하지 않고 바라볼 수 있는 미디어 리터러시 능력을 함양할 수 있도록 지도한다."@ko .
+ex:DiverseViewsOfFilmCoreIdea a ex:CoreIdea ; ex:description "영화가 바라보는 세상은 다양하고 영화를 바라보는 시선 역시 다양하다."@ko .
+ex:FilmAsSyntheticArtCoreIdea a ex:CoreIdea ; ex:description "종합예술의 특성을 지닌 영화는 다양한 관점에서 정의할 수 있으며 산업적인 측면과도 밀접한 연관성을 가지고 있다."@ko .
+ex:ConceptOfFilm a ex:KnowledgeUnderstanding ; rdfs:label "영화의 개념"@ko ; ex:gradeBand "고등학교"@ko .
+ex:FilmOtherArtsTechnology a ex:KnowledgeUnderstanding ; rdfs:label "영화와 다른 예술, 기술과의 관계"@ko ; ex:gradeBand "고등학교"@ko .
+ex:FilmAndIndustry a ex:KnowledgeUnderstanding ; rdfs:label "영화와 산업"@ko ; ex:gradeBand "고등학교"@ko .
+ex:TypesOfFilm a ex:KnowledgeUnderstanding ; rdfs:label "영화의 종류"@ko ; ex:gradeBand "고등학교"@ko .
+ex:ExploreFilmCharacteristics a ex:ProcessSkill ; rdfs:label "영화 감상과 이해를 통한 영화의 특성 탐색하기"@ko ; ex:gradeBand "고등학교"@ko .
+ex:ExamineFormDifferences a ex:ProcessSkill ; rdfs:label "영화의 형식에 따른 차이점을 살펴보기"@ko ; ex:gradeBand "고등학교"@ko .
+ex:AnalyzeVideoMediaDifferences a ex:ProcessSkill ; rdfs:label "다양한 영상 매체를 살펴보고 차이점을 분석하기"@ko ; ex:gradeBand "고등학교"@ko .
+ex:OpenToFilmValues a ex:ValueAttitude ; rdfs:label "영화의 다양한 가치를 탐색할 수 있는 열린 태도"@ko ; ex:gradeBand "고등학교"@ko .
+ex:ActivelyEnjoyFilm a ex:ValueAttitude ; rdfs:label "영화를 적극적으로 향유하려는 태도"@ko ; ex:gradeBand "고등학교"@ko .
+ex:RespectDiversityOfExpression a ex:ValueAttitude ; rdfs:label "영화 표현의 다양성에 대해 존중하는 태도"@ko ; ex:gradeBand "고등학교"@ko .
+ex:FilmUnderstandingStd01_01 a ex:AchievementStandard ;
+    rdfs:label "[12영이01-01]"@ko ;
+    ex:standardCode "[12영이01-01]"@ko ;
+    ex:standardText "다양한 측면에서 영화를 탐구하고 정의함으로써 영화의 의미를 탐색한다."@ko ;
+    ex:targetVerb "탐색하다"@ko ;
+    ex:standardExplanation "[12영이01-01], [12영이01-02]는 영화의 기본 개념과 의미를 학습하고 예술의 한 분야로서의 영화를 깊이 이해한다. 과학기술의 발달에 힘입어 탄생하여 예술 분야이자 대중문화로 빠르게 정착하게 된 영화의 특성을 이해한다. 영화와 다른 예술 분야와 영화와의 공통점을 학습하고, 영화만이 가지고 있는 차이점에 대한 탐구를 통해 다른 예술 분야와 구분되는 영화만의 고유한 특성을 이해하도록 한다. ‘제7의 예술’의 의미와 종합예술로서의 영화의 의미를 이해하도록 한다."@ko .
+ex:FilmUnderstandingStd01_02 a ex:AchievementStandard ;
+    rdfs:label "[12영이01-02]"@ko ;
+    ex:standardCode "[12영이01-02]"@ko ;
+    ex:standardText "영화의 종합 예술적 특성에 대한 이해를 통해 다른 예술과의 차이점을 탐구한다."@ko ;
+    ex:targetVerb "탐구하다"@ko ;
+    ex:standardExplanation "[12영이01-01], [12영이01-02]는 영화의 기본 개념과 의미를 학습하고 예술의 한 분야로서의 영화를 깊이 이해한다. 과학기술의 발달에 힘입어 탄생하여 예술 분야이자 대중문화로 빠르게 정착하게 된 영화의 특성을 이해한다. 영화와 다른 예술 분야와 영화와의 공통점을 학습하고, 영화만이 가지고 있는 차이점에 대한 탐구를 통해 다른 예술 분야와 구분되는 영화만의 고유한 특성을 이해하도록 한다. ‘제7의 예술’의 의미와 종합예술로서의 영화의 의미를 이해하도록 한다."@ko .
+ex:FilmUnderstandingStd01_03 a ex:AchievementStandard ;
+    rdfs:label "[12영이01-03]"@ko ;
+    ex:standardCode "[12영이01-03]"@ko ;
+    ex:standardText "산업적 측면과 대중 예술적 측면에서 영화의 특성과 의의를 고루 이해한다."@ko ;
+    ex:targetVerb "이해하다"@ko ;
+    ex:standardExplanation "[12영이01-03]은 예술로서 발전해온 영화의 의의와 산업으로서 성장해온 영화의 의의에 대한 균형 있는 학습을 통해 예술영화와 상업영화를 깊이 이해하고 고루 수용하는 태도를 기르도록 한다."@ko .
+ex:FilmUnderstandingStd01_04 a ex:AchievementStandard ;
+    rdfs:label "[12영이01-04]"@ko ;
+    ex:standardCode "[12영이01-04]"@ko ;
+    ex:standardText "다양한 영화의 종류를 탐색하고 그 특성을 탐구한다."@ko ;
+    ex:targetVerb "탐구하다"@ko ;
+    ex:standardExplanation "[12영이01-04]는 극영화, 기록영화, 실험영화 등으로 구분되는 다양한 영화의 종류와 그 특성을 탐구함으로써 각각의 영화가 가지는 의의에 대해 이해하도록 한다. 또한 다양한 종류의 영화에 대한 폭넓은 이해를 통해 영화라는 매체를 바라보는 시야를 넓히도록 한다."@ko .
+ex:FilmUnderstandingStd01_05 a ex:AchievementStandard ;
+    rdfs:label "[12영이01-05]"@ko ;
+    ex:standardCode "[12영이01-05]"@ko ;
+    ex:standardText "디지털 기술의 발전이 영화에 끼친 영향을 살펴보고 다양한 영상 매체에 관해 탐구한다."@ko ;
+    ex:targetVerb "탐구하다"@ko ;
+    ex:standardExplanation "[12영이01-05]는 디지털 기술의 발전에 따라 변화해 온 영화 기술의 발전 과정 및 영상 매체의 변천사를 이해하며, 영화가 나아갈 방향에 관해 탐구하도록 한다. 웹드라마, 유튜브, OTT 서비스 등의 영상 매체와 영화와의 연관성을 이해하며 현대 사회에서 영상 매체의 역할 및 발전 방향에 관해 탐구하도록 한다."@ko .
+
+# --- 영역: 영화의 구성 요소 ---
+ex:FilmComponents a ex:LearningArea ;
+    rdfs:label "영화의 구성 요소"@ko ;
+    ex:description "이미지와 사운드, 스토리에 대한 구체적인 내용의 학습을 통해 영화가 가진 고유한 예술적 특성과 미학적 특성을 파악하고 영화 속에 내재된 의미에 대해 올바르게 분석할 수 있는 능력과 동시에 영화로 표현될 수 있는 다양한 방식에 대한 탐구를 통해 창의적 상상력도 키우게 된다."@ko ;
+    ex:hasCoreIdea ex:ImageMeaningCoreIdea, ex:SoundMeaningCoreIdea, ex:StoryValuesCoreIdea ;
+    ex:hasContentElement ex:FilmLanguageImage, ex:SoundEffectsFilmMusic, ex:ThemeAndPlot, ex:FilmGenre,
+        ex:UnderstandImagesByCut, ex:AnalyzeImagesFromPerspectives, ex:AnalyzeRoleOfSound, ex:ExploreGenreElements,
+        ex:AcceptPhenomenaFromPerspectives, ex:ImagineCinematically, ex:EnjoyArtisticValueOfFilm ;
+    ex:hasStandard ex:FilmUnderstandingStd02_01, ex:FilmUnderstandingStd02_02, ex:FilmUnderstandingStd02_03, ex:FilmUnderstandingStd02_04, ex:FilmUnderstandingStd02_05, ex:FilmUnderstandingStd02_06 ;
+    ex:applicationNote "각각의 개념에 맞는 적절한 학습 활동을 병행하여 숏과 앵글의 의미를 보다 심층적으로 이해할 수 있도록 지도한다."@ko ,
+        "장면화, 몽타주 관련 다양한 영화 자료의 제시를 통해 학습자가 그 의미를 몸소 습득할 수 있도록 도우며, 핵심 요소를 이해하고 영화 매체를 입체적으로 이해할 수 있도록 안내한다."@ko ,
+        "음향 효과와 영화 음악의 개념에 대한 단순한 이해에서 그치는 것이 아니라 음향 효과와 영화 음악을 통해 영화를 더욱 풍부하게 만드는 ‘영화 사운드’의 역할에 대해 이해할 수 있도록 지도한다."@ko ,
+        "영화가 시대상을 반영하며 사회의 다양한 가치관을 반영하는 것의 의의를 이해하고, 더 나아가 그러한 영화의 특성을 고려하여 영화 감상, 영화 제작 시 지녀야 할 태도에 대해 사고를 확산할 수 있도록 돕는다."@ko ,
+        "학습자의 수준에 맞는 적절한 장르 영화를 학습 자료로 제공함으로써 이해를 돕고 도상, 상징, 관습 등의 장르 요소를 스스로 찾아봄으로써 능동적으로 학습에 참여할 수 있도록 지도한다."@ko .
+ex:ImageMeaningCoreIdea a ex:CoreIdea ; ex:description "영화는 이미지의 움직임과 결합을 통해 의미를 소통하고, 또 새로운 의미를 만들어내기도 한다."@ko .
+ex:SoundMeaningCoreIdea a ex:CoreIdea ; ex:description "영화에서 사운드는 이미지의 의미 작용을 도울 뿐만 아니라 의미를 창조하기도 한다."@ko .
+ex:StoryValuesCoreIdea a ex:CoreIdea ; ex:description "영화는 다양한 종류의 이야기를 통해 다양한 가치관과 사상을 반영한다."@ko .
+ex:FilmLanguageImage a ex:KnowledgeUnderstanding ; rdfs:label "영화 언어와 이미지"@ko ; ex:gradeBand "고등학교"@ko .
+ex:SoundEffectsFilmMusic a ex:KnowledgeUnderstanding ; rdfs:label "음향효과와 영화음악"@ko ; ex:gradeBand "고등학교"@ko .
+ex:ThemeAndPlot a ex:KnowledgeUnderstanding ; rdfs:label "영화의 테마와 줄거리"@ko ; ex:gradeBand "고등학교"@ko .
+ex:FilmGenre a ex:KnowledgeUnderstanding ; rdfs:label "영화 장르"@ko ; ex:gradeBand "고등학교"@ko .
+ex:UnderstandImagesByCut a ex:ProcessSkill ; rdfs:label "영화의 컷을 중심으로 이미지들을 이해하기"@ko ; ex:gradeBand "고등학교"@ko .
+ex:AnalyzeImagesFromPerspectives a ex:ProcessSkill ; rdfs:label "다양한 관점에서 이미지를 분석하기"@ko ; ex:gradeBand "고등학교"@ko .
+ex:AnalyzeRoleOfSound a ex:ProcessSkill ; rdfs:label "사운드의 역할을 분석하기"@ko ; ex:gradeBand "고등학교"@ko .
+ex:ExploreGenreElements a ex:ProcessSkill ; rdfs:label "영화의 줄거리를 살펴보고 장르 요소에 관해 탐구하기"@ko ; ex:gradeBand "고등학교"@ko .
+ex:AcceptPhenomenaFromPerspectives a ex:ValueAttitude ; rdfs:label "다양한 관점에서 현상을 살펴보고 수용하는 태도"@ko ; ex:gradeBand "고등학교"@ko .
+ex:ImagineCinematically a ex:ValueAttitude ; rdfs:label "영화적으로 상상하는 태도"@ko ; ex:gradeBand "고등학교"@ko .
+ex:EnjoyArtisticValueOfFilm a ex:ValueAttitude ; rdfs:label "영화의 예술적 가치를 향유하는 태도"@ko ; ex:gradeBand "고등학교"@ko .
+ex:FilmUnderstandingStd02_01 a ex:AchievementStandard ;
+    rdfs:label "[12영이02-01]"@ko ;
+    ex:standardCode "[12영이02-01]"@ko ;
+    ex:standardText "숏과 앵글의 의미와 종류를 살펴보고 이것을 통해 드러나는 영상의 의미를 이해한다."@ko ;
+    ex:targetVerb "이해하다"@ko ;
+    ex:standardExplanation "[12영이02-01]은 화면 구성이라는 큰 틀 속에서 숏과 앵글의 의미를 이해하고 각각의 숏과 앵글의 세부적인 명칭과 개념을 이해하도록 한다. 명칭, 개념학습에서 더 나아가 숏과 앵글을 통해 형성되는 의미와 그를 통해 전해지는 메시지를 이해하며 영상 언어 학습의 기반을 다지도록 한다."@ko .
+ex:FilmUnderstandingStd02_02 a ex:AchievementStandard ;
+    rdfs:label "[12영이02-02]"@ko ;
+    ex:standardCode "[12영이02-02]"@ko ;
+    ex:standardText "장면화(미장센)의 개념을 이해하고, 이것이 영화에 적용되는 방식을 탐구한다."@ko ;
+    ex:targetVerb "탐구하다"@ko ;
+    ex:standardExplanation "[12영이02-02]는 프레임 안에 시각적 요소들을 배치함으로써 영화적 공간을 배열하는 미장센의 의미를 이해하도록 설정하였다. [12영이02-03]은 한 화면과 다음 화면 간의 병치에 따르는 관련성 속에서 몽타주의 개념을 이해하도록 설정하였다. [12영이02-02], [12영이02-03]을 통해 학습자는 미장센이 강조된 영화와 몽타주가 강조된 영화의 특징과 차이점을 폭넓게 이해하며, 각각의 개념을 통해 창출되는 영상의 의미를 학습하도록 한다."@ko .
+ex:FilmUnderstandingStd02_03 a ex:AchievementStandard ;
+    rdfs:label "[12영이02-03]"@ko ;
+    ex:standardCode "[12영이02-03]"@ko ;
+    ex:standardText "몽타주의 개념과 종류를 이해하고, 장면의 연결 방식에 따른 표현과 차이를 탐구한다."@ko ;
+    ex:targetVerb "탐구하다"@ko ;
+    ex:standardExplanation "[12영이02-02]는 프레임 안에 시각적 요소들을 배치함으로써 영화적 공간을 배열하는 미장센의 의미를 이해하도록 설정하였다. [12영이02-03]은 한 화면과 다음 화면 간의 병치에 따르는 관련성 속에서 몽타주의 개념을 이해하도록 설정하였다. [12영이02-02], [12영이02-03]을 통해 학습자는 미장센이 강조된 영화와 몽타주가 강조된 영화의 특징과 차이점을 폭넓게 이해하며, 각각의 개념을 통해 창출되는 영상의 의미를 학습하도록 한다."@ko .
+ex:FilmUnderstandingStd02_04 a ex:AchievementStandard ;
+    rdfs:label "[12영이02-04]"@ko ;
+    ex:standardCode "[12영이02-04]"@ko ;
+    ex:standardText "음향 효과와 영화 음악에 대한 이해를 통해 영화 사운드의 역할을 이해한다."@ko ;
+    ex:targetVerb "이해하다"@ko ;
+    ex:standardExplanation "[12영이02-04]는 영화가 이미지와 사운드가 결합한 매체임을 확인하고 영화에서 사운드의 역할에 대해 심층적으로 학습할 수 있도록 설정하였다. 대사와 음향 효과, 음악을 구분하고 세부적으로 동시 음향과 비동시 음향, 내재음과 외재음 등의 개념을 구분하여 영화 사운드를 통해 더욱 풍부해지는 청각적 효과에 대해 학습한다."@ko .
+ex:FilmUnderstandingStd02_05 a ex:AchievementStandard ;
+    rdfs:label "[12영이02-05]"@ko ;
+    ex:standardCode "[12영이02-05]"@ko ;
+    ex:standardText "여러 가지 테마로 표현한 영화를 살펴보고, 영화가 사회의 다양한 가치관을 반영하는 방식에 관해 탐구한다."@ko ;
+    ex:targetVerb "탐구하다"@ko ;
+    ex:standardExplanation "[12영이02-05], [12영이02-06]은 다양한 테마와 장르로 구분되는 영화 학습을 통해 다채로운 영화의 세계를 경험하도록 한다. 여러 가지 테마의 영화 학습을 통해 영화는 시대상, 창작자의 가치관이 반영되는 매체임을 이해한다. 장르 영화의 요소인 도상, 상징, 관습의 개념을 이해하고 각 장르에 따라 각각의 특징들을 이해함으로써 장르별 특성을 구분한다. 더 나아가 그러한 장르가 등장하게 된 시대 배경에 대해 이해하도록 한다."@ko .
+ex:FilmUnderstandingStd02_06 a ex:AchievementStandard ;
+    rdfs:label "[12영이02-06]"@ko ;
+    ex:standardCode "[12영이02-06]"@ko ;
+    ex:standardText "영화의 내용을 살펴보고 장르 요소에 관해서 탐구한다."@ko ;
+    ex:targetVerb "탐구하다"@ko ;
+    ex:standardExplanation "[12영이02-05], [12영이02-06]은 다양한 테마와 장르로 구분되는 영화 학습을 통해 다채로운 영화의 세계를 경험하도록 한다. 여러 가지 테마의 영화 학습을 통해 영화는 시대상, 창작자의 가치관이 반영되는 매체임을 이해한다. 장르 영화의 요소인 도상, 상징, 관습의 개념을 이해하고 각 장르에 따라 각각의 특징들을 이해함으로써 장르별 특성을 구분한다. 더 나아가 그러한 장르가 등장하게 된 시대 배경에 대해 이해하도록 한다."@ko .
+
+# --- 영역: 영화의 역사 ---
+ex:FilmHistory a ex:LearningArea ;
+    rdfs:label "영화의 역사"@ko ;
+    ex:description "세계 영화와 한국 영화의 흐름에 대한 학습을 통해서 영화의 기술적인 발전과 영화와 인간, 사회, 역사가 어떻게 상호 작용하여 왔는가를 파악할 수 있도록 하여 사회의 여러 현상이 영화를 통해 이야기되는 방식에 대해 살펴볼 수 있도록 한다."@ko ;
+    ex:hasCoreIdea ex:FilmSocietyInteractionCoreIdea, ex:KoreanFilmGrowthCoreIdea ;
+    ex:hasContentElement ex:BirthOfFilmWorldHistory, ex:ModernWorldCinema, ex:EarlyKoreanFilm1960s, ex:ModernKoreanFilm,
+        ex:ExploreWorldFilmHistoryByEra, ex:ExamineFilmMovements, ex:ExploreFilmHumanSocietyInteraction, ex:FutureOrientedAttitude,
+        ex:ExploreMeaningValueOfFilm, ex:ExploreFilmSocialImpact, ex:AcceptArtisticValuePositively ;
+    ex:hasStandard ex:FilmUnderstandingStd03_01, ex:FilmUnderstandingStd03_02, ex:FilmUnderstandingStd03_03, ex:FilmUnderstandingStd03_04 ;
+    ex:applicationNote "영화사의 시대별 특징을 보여줄 수 있는 적절한 학습 자료를 제공함으로써 학습자의 흥미를 고취시키며, 시청각 자료를 직접 감상하고 분석하여 심층적으로 이해할 수 있는 능력을 기르도록 한다."@ko ,
+        "하나의 사조에 치우치지 않고 각각의 사조에서 드러나는 특징과 시대 배경, 역사적 의의를 균형 있게 학습할 수 있도록 안내하며 이러한 내용이 단순히 암기하여야 할 대상이 되지 않도록 유의한다."@ko ,
+        "학습자 중심의 교수·학습 방법을 활용하여 학습자가 능동적으로 학습에 참여할 수 있도록 지도한다."@ko ,
+        "한국 영화의 역사와 특징을 근현대와 더불어 이해할 수 있도록 연계하며, 한국의 정서를 담아 세계 속에서 사랑받는 다양한 콘텐츠에 대한 이해와 분석을 통해 우리 문화에 자긍심을 높이고 발전 방향을 도모하도록 한다."@ko .
+ex:FilmSocietyInteractionCoreIdea a ex:CoreIdea ; ex:description "영화는 인간, 사회, 역사와 끊임없이 상호 작용해 왔고 예술적, 기술적, 대중적 예술로 꾸준히 발전해왔다."@ko .
+ex:KoreanFilmGrowthCoreIdea a ex:CoreIdea ; ex:description "한국 영화는 세계 영화의 발전적인 요소를 지속해서 받아들이고 변형, 진화를 거듭하였고 마침내 글로벌 핵심 콘텐츠로 성장했다."@ko .
+ex:BirthOfFilmWorldHistory a ex:KnowledgeUnderstanding ; rdfs:label "영화의 탄생과 주요 세계 영화사"@ko ; ex:gradeBand "고등학교"@ko .
+ex:ModernWorldCinema a ex:KnowledgeUnderstanding ; rdfs:label "현대 세계 영화"@ko ; ex:gradeBand "고등학교"@ko .
+ex:EarlyKoreanFilm1960s a ex:KnowledgeUnderstanding ; rdfs:label "한국 영화의 시작과 1960년대 한국 영화의 르네상스"@ko ; ex:gradeBand "고등학교"@ko .
+ex:ModernKoreanFilm a ex:KnowledgeUnderstanding ; rdfs:label "현대 한국 영화의 발전"@ko ; ex:gradeBand "고등학교"@ko .
+ex:ExploreWorldFilmHistoryByEra a ex:ProcessSkill ; rdfs:label "시대별 세계 영화 역사에 대해 탐색하기"@ko ; ex:gradeBand "고등학교"@ko .
+ex:ExamineFilmMovements a ex:ProcessSkill ; rdfs:label "주요 영화 사조에 대해 살펴보기"@ko ; ex:gradeBand "고등학교"@ko .
+ex:ExploreFilmHumanSocietyInteraction a ex:ProcessSkill ; rdfs:label "영화와 인간, 사회와의 상호 작용에 대해 탐색하기"@ko ; ex:gradeBand "고등학교"@ko .
+ex:FutureOrientedAttitude a ex:ValueAttitude ; rdfs:label "영화의 발전 방향을 탐색하는 미래 지향적 태도"@ko ; ex:gradeBand "고등학교"@ko .
+ex:ExploreMeaningValueOfFilm a ex:ValueAttitude ; rdfs:label "영화의 의미와 가치를 탐색하는 태도"@ko ; ex:gradeBand "고등학교"@ko .
+ex:ExploreFilmSocialImpact a ex:ValueAttitude ; rdfs:label "영화가 사회에 끼치는 영향을 탐색하는 태도"@ko ; ex:gradeBand "고등학교"@ko .
+ex:AcceptArtisticValuePositively a ex:ValueAttitude ; rdfs:label "예술적 가치를 긍정적으로 수용하는 자세"@ko ; ex:gradeBand "고등학교"@ko .
+ex:FilmUnderstandingStd03_01 a ex:AchievementStandard ;
+    rdfs:label "[12영이03-01]"@ko ;
+    ex:standardCode "[12영이03-01]"@ko ;
+    ex:standardText "영화의 탄생과 유성 영화의 등장 등 초기 영화 등에 관해 탐구한다."@ko ;
+    ex:targetVerb "탐구하다"@ko ;
+    ex:standardExplanation "[12영이03-01]은 다양한 기계의 발명과 기술적 발전들이 축적되고 결합하면서 최초의 영화가 탄생하게 된 배경에 대해 이해하도록 설정하였다. 다른 예술 분야와 다르게 공식적으로 탄생을 기록할 수 있었던 배경을 이해하고, 최초의 영화가 가지는 의의에 대해 학습한다."@ko .
+ex:FilmUnderstandingStd03_02 a ex:AchievementStandard ;
+    rdfs:label "[12영이03-02]"@ko ;
+    ex:standardCode "[12영이03-02]"@ko ;
+    ex:standardText "현대 세계 영화의 흐름에 관해 탐구한다."@ko ;
+    ex:targetVerb "탐구하다"@ko ;
+    ex:standardExplanation "[12영이03-02]는 영화가 짧은 단상들을 기록하는 매체에서 서사 영화로 발전하게 된 배경에 대해 알아보며 독일 표현주의, 소비에트 몽타주, 이탈리아 네오리얼리즘, 할리우드 스튜디오 시대, 프랑스 누벨바그, 뉴 아메리칸 시네마, 뉴 저먼 시네마 등 주요한 영화 사조와 그 특징에 대한 학습을 통해 영화와 영화사에 대한 폭넓은 이해가 가능하도록 설정하였다."@ko .
+ex:FilmUnderstandingStd03_03 a ex:AchievementStandard ;
+    rdfs:label "[12영이03-03]"@ko ;
+    ex:standardCode "[12영이03-03]"@ko ;
+    ex:standardText "한국 영화의 시작과 1960년대 부흥기를 맞은 한국 영화에 관해 탐구한다."@ko ;
+    ex:targetVerb "탐구하다"@ko ;
+    ex:standardExplanation "[12영이03-03]은 한국 영화사에 대한 학습을 통해 한국 영화의 탄생과 발전 과정에 대해 학습할 수 있도록 설정하였다. 시대별 주요 작품 및 특징을 한국사와 관련지어 이해하고 그 의의에 대해 생각하도록 한다."@ko .
+ex:FilmUnderstandingStd03_04 a ex:AchievementStandard ;
+    rdfs:label "[12영이03-04]"@ko ;
+    ex:standardCode "[12영이03-04]"@ko ;
+    ex:standardText "1990년대 이후 한국 영화의 변화와 발전에 대해 살펴보고, 최근 글로벌 핵심 콘텐츠로 성장한 한국 영화의 위상과 미래 영화의 변화에 관해 탐구한다."@ko ;
+    ex:targetVerb "탐구하다"@ko ;
+    ex:standardExplanation "[12영이03-04]는 세계 속에서 사랑받고 있는 한국 영화의 위상에 대해 학습하며 그 이유를 분석하고, 앞으로의 한국 영화가 나아가야 할 방향에 대해 생각하도록 한다."@ko .
+
+# =====================================================================
+# [진로 선택 과목] 영화 감상과 비평 — 원문 p.453~461
+# =====================================================================
+ex:FilmAppreciationCriticism a ex:Subject, ex:FilmAppreciationCriticismSubject ;
+    rdfs:label "영화 감상과 비평"@ko ;
+    ex:courseCategory "진로 선택 과목"@ko ;
+    ex:description "<영화 감상과 비평>은 영화 작품을 감상하고, 적절한 기준을 바탕으로 작품에 대해 사고하고 분석함으로써 영화를 더욱 풍부하게 향유하고 사유할 수 있도록 하는 과목이다."@ko ;
+    ex:hasArea ex:UnderstandingAppreciationCriticism, ex:PracticeAppreciationCriticism ;
+    ex:developsCompetency ex:CreativeThinking, ex:CinematicImagination, ex:Collaboration, ex:CinematicExpression, ex:SelfManagement, ex:ProblemSolving, ex:ArtEnjoyment .
+
+# --- 영역: 감상과 비평의 이해 ---
+ex:UnderstandingAppreciationCriticism a ex:LearningArea ;
+    rdfs:label "감상과 비평의 이해"@ko ;
+    ex:description "감상과 비평의 개념과 목적을 이해하고, 그 차이를 올바르게 이해함으로써, 영화와 관련된 글쓰기의 기초를 다진다."@ko ;
+    ex:hasCoreIdea ex:MeaningOfAppreciationCoreIdea, ex:FilmLanguageAppreciationCoreIdea ;
+    ex:hasContentElement ex:PurposeOfAppreciationCriticism, ex:ConceptDifferenceAppreciationCriticism, ex:EffectiveAppreciationCriticismMethods, ex:AppreciateWithOwnPerspective,
+        ex:ExploreMeaningOfAppreciation, ex:FindVariousAppreciationMethods, ex:ReadAndWriteFilm, ex:EnjoyFilmAppreciation,
+        ex:ObserveViewingEtiquette, ex:RespectCreatorRights, ex:OpenToDiverseInterpretations, ex:ActivelyExploreAlternatives ;
+    ex:hasStandard ex:FilmAppreciationCriticismStd01_01, ex:FilmAppreciationCriticismStd01_02, ex:FilmAppreciationCriticismStd01_03, ex:FilmAppreciationCriticismStd01_04 ;
+    ex:applicationNote "영화 감상과 비평의 개념과 목적에 대한 이해를 통해 영화라는 매체를 수동적으로 받아들이는 단순한 관람에서 나아가 능동적으로 수용하는 관객으로서의 영화를 경험할 수 있도록 지도한다."@ko ,
+        "영화를 역사, 사회, 예술, 대중문화의 관점에서 살펴봄으로써 작품의 스토리뿐만 아니라 다양한 관점에서 영화를 감상하고 해석할 수 있도록 안내한다."@ko ,
+        "다양한 시청각 자료와 매체, 영화 작품 등을 적극적으로 활용하여 수업에 역동성을 부여하고 학생들의 관심을 끌어내도록 한다."@ko ,
+        "학생의 진로와 관심 분야, 현재 사회적 이슈와 관련이 있는 영화들을 선정하여 다채롭게 학습 자료로 제공함으로써 호기심을 고취시키고 이해의 폭을 넓힌다."@ko ,
+        "하나의 장르, 주제 등에 치우치지 않고 다양한 장르와 특성의 영화를 골고루 제공하여 학습자가 능동적으로 영화라는 매체를 바라볼 수 있도록 돕는다."@ko ,
+        "영화를 감상한 후 느낀 점에 대해서 자유롭게 표현하고 대화 나눌 수 있는 편안하고 개방적인 분위기를 조성하여 학생이 능동적으로 학습에 참여할 수 있도록 지도한다."@ko ,
+        "능동적이고 적극적으로 영화를 감상하고 비평하는 과정을 통해 미디어 리터러시 능력을 함양할 수 있도록 지도한다."@ko .
+ex:MeaningOfAppreciationCoreIdea a ex:CoreIdea ; ex:description "영화 감상은 스토리의 해석뿐만 아니라 다양한 측면에서의 의미를 파악하는 활동이다"@ko .
+ex:FilmLanguageAppreciationCoreIdea a ex:CoreIdea ; ex:description "영화 감상은 영화언어에 대한 이해를 바탕으로 영화를 보고, 읽고, 감상문을 쓰는 작업을 창조적으로 수행하는 작업이다."@ko .
+ex:PurposeOfAppreciationCriticism a ex:KnowledgeUnderstanding ; rdfs:label "영화 감상과 비평의 목적"@ko ; ex:gradeBand "고등학교"@ko .
+ex:ConceptDifferenceAppreciationCriticism a ex:KnowledgeUnderstanding ; rdfs:label "영화 감상과 비평의 개념과 차이"@ko ; ex:gradeBand "고등학교"@ko .
+ex:EffectiveAppreciationCriticismMethods a ex:KnowledgeUnderstanding ; rdfs:label "효과적인 영화 감상과 비평의 방법"@ko ; ex:gradeBand "고등학교"@ko .
+ex:AppreciateWithOwnPerspective a ex:ProcessSkill ; rdfs:label "자신의 관점을 가지고 영화를 감상하기"@ko ; ex:gradeBand "고등학교"@ko .
+ex:ExploreMeaningOfAppreciation a ex:ProcessSkill ; rdfs:label "감상의 의미를 탐색하기"@ko ; ex:gradeBand "고등학교"@ko .
+ex:FindVariousAppreciationMethods a ex:ProcessSkill ; rdfs:label "다양한 감상 방법을 찾아보기"@ko ; ex:gradeBand "고등학교"@ko .
+ex:ReadAndWriteFilm a ex:ProcessSkill ; rdfs:label "영화를 읽고 쓰기"@ko ; ex:gradeBand "고등학교"@ko .
+ex:EnjoyFilmAppreciation a ex:ValueAttitude ; rdfs:label "영화 감상을 즐기는 태도"@ko ; ex:gradeBand "고등학교"@ko .
+ex:ObserveViewingEtiquette a ex:ValueAttitude ; rdfs:label "영화 감상의 예절을 지키는 태도"@ko ; ex:gradeBand "고등학교"@ko .
+ex:RespectCreatorRights a ex:ValueAttitude ; rdfs:label "저작자의 노력과 가치를 인정하고 권리를 보호하는 태도"@ko ; ex:gradeBand "고등학교"@ko .
+ex:OpenToDiverseInterpretations a ex:ValueAttitude ; rdfs:label "현상에 대한 다양한 해석을 열린 마음으로 수용하는 태도"@ko ; ex:gradeBand "고등학교"@ko .
+ex:ActivelyExploreAlternatives a ex:ValueAttitude ; rdfs:label "적극적으로 대안을 탐색하는 태도"@ko ; ex:gradeBand "고등학교"@ko .
+ex:FilmAppreciationCriticismStd01_01 a ex:AchievementStandard ;
+    rdfs:label "[12영감01-01]"@ko ;
+    ex:standardCode "[12영감01-01]"@ko ;
+    ex:standardText "영화 감상과 비평의 목적에 관해 탐구한다."@ko ;
+    ex:targetVerb "탐구하다"@ko ;
+    ex:standardExplanation "[12영감01-01]은 감상과 비평의 목적을 이해하는 것을 목표로 한다. 영화 감상과 비평을 통해 감독의 의도, 작품의 의미와 맥락을 파악함으로써 작품과 소통하고, 더 나아가 예술적 소양을 함양하여 사회를 바라볼 수 있는 시야를 넓히는 과목의 의의에 대해 이해하도록 한다."@ko .
+ex:FilmAppreciationCriticismStd01_02 a ex:AchievementStandard ;
+    rdfs:label "[12영감01-02]"@ko ;
+    ex:standardCode "[12영감01-02]"@ko ;
+    ex:standardText "관객, 작품, 정서와 의미, 영화 양식 등의 관점에서 감상과 비평의 차이점을 탐구한다."@ko ;
+    ex:targetVerb "탐구하다"@ko ;
+    ex:standardExplanation "[12영감01-02]는 감상과 비평의 의미를 이해하고, 둘의 차이점을 올바르게 구분함으로써 상황과 목적에 맞는 표현과 글쓰기가 가능하게 한다."@ko .
+ex:FilmAppreciationCriticismStd01_03 a ex:AchievementStandard ;
+    rdfs:label "[12영감01-03]"@ko ;
+    ex:standardCode "[12영감01-03]"@ko ;
+    ex:standardText "올바른 영화 감상과 비평의 방법에 관해 탐구한다."@ko ;
+    ex:targetVerb "탐구하다"@ko ;
+    ex:standardExplanation "[12영감01-03]은 올바른 감상과 비평의 방법에 관해 탐구함으로써 열린 마음과 비판적인 시선으로 영화라는 매체를 이해하는 폭을 넓히고 더 나아가 예술 작품을 바라보고 이해하는 태도를 함양할 수 있다."@ko .
+ex:FilmAppreciationCriticismStd01_04 a ex:AchievementStandard ;
+    rdfs:label "[12영감01-04]"@ko ;
+    ex:standardCode "[12영감01-04]"@ko ;
+    ex:standardText "영화를 감상과 비평의 관점에서 분석함으로써, 영화의 의미와 가치에 관해 탐구한다."@ko ;
+    ex:targetVerb "탐구하다"@ko ;
+    ex:standardExplanation "[12영감01-04]는 올바른 태도로 영화를 감상하고 정치, 역사, 경제, 철학, 사회 등 다양한 관점에서 작품을 이해하고 실제로 자기 생각을 표현, 정리하는 연습을 한다."@ko .
+
+# --- 영역: 감상과 비평의 실제 ---
+ex:PracticeAppreciationCriticism a ex:LearningArea ;
+    rdfs:label "감상과 비평의 실제"@ko ;
+    ex:description "역사, 사회, 예술, 대중 등 다양한 관점에서 영화를 보고 해석할 수 있는 능력을 기른다."@ko ;
+    ex:hasCoreIdea ex:DiversePerspectivesCoreIdea, ex:SelfExpressionSocietyFutureCoreIdea ;
+    ex:hasContentElement ex:FilmAndSociety, ex:FilmAndHistory, ex:FilmAndArt, ex:FilmAndPopularCulture,
+        ex:AnalyzeCriticismCases, ex:OrganizePerspectiveBeforeAfter, ex:WriteReviewFromPerspectives, ex:RespectOthersPerspectives,
+        ex:ViewFromDiversePerspectives, ex:ExplorePositiveValues ;
+    ex:hasStandard ex:FilmAppreciationCriticismStd02_01, ex:FilmAppreciationCriticismStd02_02, ex:FilmAppreciationCriticismStd02_03, ex:FilmAppreciationCriticismStd02_04, ex:FilmAppreciationCriticismStd02_05 ;
+    ex:applicationNote "학습자가 감상문, 비평문 등의 긴 글을 작성하는 데에 부담을 느끼지 않도록 발표를 통하여 서로의 생각을 공유하는 것에서부터 시작하여 한 줄 평 쓰기, 짧게 느낀 점 작성하기 등 단계적으로 글쓰기를 지도한다."@ko ,
+        "글쓰기에 있어 초기에는 줄거리 중심, 개인적 느낌을 중심으로 글쓰기를 진행하고 점차 사회, 역사, 대중, 예술 등의 관점에서 영화를 분석할 수 있는 전문적인 비평문의 형태로 발전할 수 있도록 한다."@ko ,
+        "다양한 시청각 자료와 매체, 영화 작품 등을 적극적으로 활용하여 수업에 역동성을 부여하고 학생들의 관심을 끌어내도록 한다. 학생의 진로와 관심 분야, 현재 사회적 이슈와 관련이 있는 영화를 다채롭게 학습 자료로 제공함으로써 호기심을 고취시킨다."@ko ,
+        "하나의 장르, 주제 등에 치우치지 않고 다양한 장르와 특성의 영화를 골고루 제공하여 학습자가 능동적으로 영화라는 매체를 바라볼 수 있도록 돕는다."@ko ,
+        "학습자 중심의 교수·학습 방법을 활용하여 학습자가 능동적으로 학습에 참여할 수 있도록 지도한다."@ko ,
+        "영화 감상 활동이 단순한 감상에 그치지 않고 진로, 인권, 민주시민, 생태전환교육 등으로 확산할 수 있도록 고려하여 학습 내용을 선정한다."@ko ,
+        "자유롭게 자신의 감상을 공유할 수 있도록 개방적인 분위기를 제공하며, 나와 다른 의견도 경청하고 받아들일 수 있는 수용적인 태도를 함양하게 한다."@ko .
+ex:DiversePerspectivesCoreIdea a ex:CoreIdea ; ex:description "사회, 역사, 예술, 대중문화 등 다양한 관점에서 영화를 감상하고 해석한다."@ko .
+ex:SelfExpressionSocietyFutureCoreIdea a ex:CoreIdea ; ex:description "영화 감상을 통해 자신을 표현하고 더 나아가 사회를 이해하고 미래를 상상하는 능력을 기른다."@ko .
+ex:FilmAndSociety a ex:KnowledgeUnderstanding ; rdfs:label "영화와 사회"@ko ; ex:gradeBand "고등학교"@ko .
+ex:FilmAndHistory a ex:KnowledgeUnderstanding ; rdfs:label "영화와 역사"@ko ; ex:gradeBand "고등학교"@ko .
+ex:FilmAndArt a ex:KnowledgeUnderstanding ; rdfs:label "영화와 예술"@ko ; ex:gradeBand "고등학교"@ko .
+ex:FilmAndPopularCulture a ex:KnowledgeUnderstanding ; rdfs:label "영화와 대중문화"@ko ; ex:gradeBand "고등학교"@ko .
+ex:AnalyzeCriticismCases a ex:ProcessSkill ; rdfs:label "감상과 비평 사례 분석하기"@ko ; ex:gradeBand "고등학교"@ko .
+ex:OrganizePerspectiveBeforeAfter a ex:ProcessSkill ; rdfs:label "감상 전후의 자신의 관점을 정리하기"@ko ; ex:gradeBand "고등학교"@ko .
+ex:WriteReviewFromPerspectives a ex:ProcessSkill ; rdfs:label "사회, 역사, 예술, 대중문화의 관점에서 감상문 쓰기"@ko ; ex:gradeBand "고등학교"@ko .
+ex:RespectOthersPerspectives a ex:ValueAttitude ; rdfs:label "타인의 관점을 존중하는 태도"@ko ; ex:gradeBand "고등학교"@ko .
+ex:ViewFromDiversePerspectives a ex:ValueAttitude ; rdfs:label "다양한 관점에서 문제와 현상을 바라보는 태도"@ko ; ex:gradeBand "고등학교"@ko .
+ex:ExplorePositiveValues a ex:ValueAttitude ; rdfs:label "긍정적 가치를 탐색하는 태도"@ko ; ex:gradeBand "고등학교"@ko .
+ex:FilmAppreciationCriticismStd02_01 a ex:AchievementStandard ;
+    rdfs:label "[12영감02-01]"@ko ;
+    ex:standardCode "[12영감02-01]"@ko ;
+    ex:standardText "영화 속에 드러난 사회 현실을 분석하고 비평함으로써 영화가 사회 현실을 어떻게 표현하고 있는지 이해한다."@ko ;
+    ex:targetVerb "이해하다"@ko ;
+    ex:standardExplanation "[12영감02-01], [12영감02-02]는 영화는 사회, 역사와 밀접한 관계를 맺고 있음을 이해하고 이와 관련하여 작품의 의미와 맥락을 이해할 수 있도록 지도한다. 영화에 드러난 시대상을 살펴보고 능동적으로 해석할 수 있는 능력을 기른다."@ko .
+ex:FilmAppreciationCriticismStd02_02 a ex:AchievementStandard ;
+    rdfs:label "[12영감02-02]"@ko ;
+    ex:standardCode "[12영감02-02]"@ko ;
+    ex:standardText "영화 속에 드러난 역사적 사실을 분석하고 비평함으로써 영화가 역사를 재현하는 방식을 이해한다."@ko ;
+    ex:targetVerb "이해하다"@ko ;
+    ex:standardExplanation "[12영감02-01], [12영감02-02]는 영화는 사회, 역사와 밀접한 관계를 맺고 있음을 이해하고 이와 관련하여 작품의 의미와 맥락을 이해할 수 있도록 지도한다. 영화에 드러난 시대상을 살펴보고 능동적으로 해석할 수 있는 능력을 기른다."@ko .
+ex:FilmAppreciationCriticismStd02_03 a ex:AchievementStandard ;
+    rdfs:label "[12영감02-03]"@ko ;
+    ex:standardCode "[12영감02-03]"@ko ;
+    ex:standardText "장르와 대중문화의 관점에서 영화를 분석하고 비평함으로써 영화와 관객의 관계를 이해한다."@ko ;
+    ex:targetVerb "이해하다"@ko ;
+    ex:standardExplanation "[12영감02-03]은 단순한 수용자가 아닌 영화라는 예술을 적극적이고 능동적으로 향유할 수 있는 관객의 의미에 대해 이해할 수 있도록 한다."@ko .
+ex:FilmAppreciationCriticismStd02_04 a ex:AchievementStandard ;
+    rdfs:label "[12영감02-04]"@ko ;
+    ex:standardCode "[12영감02-04]"@ko ;
+    ex:standardText "맞춤법, 띄어쓰기, 문장의 형식 등 글의 구성에 대한 이해를 통해 올바른 감상문 쓰기 방법에 대해 이해한다."@ko ;
+    ex:targetVerb "이해하다"@ko ;
+    ex:standardExplanation "[12영감02-04]는 감상문 작성의 토대를 다지는 글쓰기 방법에 대해 안내한다. 글쓰기를 통해 창의적, 예술적 소양을 함양할 수 있으며 학습자들이 글쓰기에 어려움과 부담감을 느끼지 않도록 체계적이고 단계적인 방법을 통해 글쓰기를 진행할 수 있도록 돕는다."@ko .
+ex:FilmAppreciationCriticismStd02_05 a ex:AchievementStandard ;
+    rdfs:label "[12영감02-05]"@ko ;
+    ex:standardCode "[12영감02-05]"@ko ;
+    ex:standardText "영화를 감상한 후 감상문 작성, 토론의 과정을 통해 영화를 더욱 깊이 향유하고 사유를 확장한다."@ko ;
+    ex:targetVerb "확장하다"@ko ;
+    ex:standardExplanation "[12영감02-05]는 학습자는 지금까지 배운 개념과 이론들을 적용하여 실제로 영화를 감상하고, 감상문을 작성하는 활동을 할 수 있다. 이러한 과정을 통해 학습자는 영화에서 표현하고 있는 것들을 스스로 이해하고 판단하는 능력을 함양하며, 비평에 필요한 정보와 자료를 수집함으로써 분석력을 높이며 창의적 사고 능력을 계발할 수 있다."@ko .
+
+# =====================================================================
+# [융합 선택 과목] 영화와 삶 — 원문 p.462~470
+# =====================================================================
+ex:FilmAndLife a ex:Subject, ex:FilmAndLifeSubject ;
+    rdfs:label "영화와 삶"@ko ;
+    ex:courseCategory "융합 선택 과목"@ko ;
+    ex:description "<영화와 삶>은 영화가 우리의 삶에 얼마나 밀접하게 연결되고 있으며 우리의 일상에 얼마나 많은 영향을 끼치고 있는지를 살펴보고 영화를 통한 다양한 학습과 활동을 통해 영화를 다시 우리의 삶에 접목할 수 있게 하는 과목이다."@ko ;
+    ex:hasArea ex:ExpressingThroughFilm, ex:ReadingWorldThroughFilm, ex:ExploringThroughFilm ;
+    ex:developsCompetency ex:CreativeThinking, ex:CinematicImagination, ex:Collaboration, ex:CinematicExpression, ex:SelfManagement, ex:ProblemSolving, ex:ArtEnjoyment .
+
+# --- 영역: 영화로 표현하기 ---
+ex:ExpressingThroughFilm a ex:LearningArea ;
+    rdfs:label "영화로 표현하기"@ko ;
+    ex:hasCoreIdea ex:StorytellingCoreIdea, ex:RecordingExpressingCoreIdea ;
+    ex:hasContentElement ex:StoryAndStorytelling, ex:FilmLanguageVisualExpression, ex:VariousVideoMedia, ex:TurnThoughtsIntoStory,
+        ex:WriteScenario, ex:MakeVideo, ex:ExpressOneselfHonestly, ex:CommunicateOpenly,
+        ex:UnderstandCreatorRoleRights ;
+    ex:hasStandard ex:FilmAndLifeStd01_01, ex:FilmAndLifeStd01_02, ex:FilmAndLifeStd01_03 ;
+    ex:applicationNote "융합 교과 과목의 특성상 영화를 전공하지 않는 일반 학생이 학습하여도 무리가 없을 정도로 수업 내용을 설정한다."@ko ,
+        "‘영화와 삶’ 과목은 영화에 대한 교육인 동시에 영화를 활용한 교육이기도 하다. 나의 특징을 잘 표현할 수 있는 이미지를 표현하는 학습 활동과 영화에서 자신과 닮은 등장인물을 조사하고 토의·토론하는 학습 활동과 같이 영화를 매개체로 다양한 학습 활동을 계획할 수 있다."@ko ,
+        "시나리오에 관한 기초적인 이론을 학습한 후에 실제로 스토리를 구상하고 창작하는 실습을 통해 자기 생각을 표현할 수 있는 능력을 기를 수 있도록 한다."@ko ,
+        "스토리 만들기는 단순히 문학적 측면에서의 글쓰기를 뛰어넘어 문화적 층위에서의 ‘이야기하기’의 개념과 방법을 탐색하는 것도 필요하다."@ko ,
+        "영화나 문학, 다양한 콘텐츠의 원천으로서의 스토리의 중요성을 학습자가 인식하게 하고 다양한 매체에 스토리가 적용되는 방식에 대해 살펴볼 수 있도록 한다."@ko ,
+        "이야기의 소재는 자료 수집을 바탕으로 진행되도록 하는데 학습자 개인의 경험, 신문 기사, 문헌 자료 검색, 문화 원형 탐색 등을 통해 이루어질 수 있도록 지도한다."@ko ,
+        "학습자가 말하고자 하는 이야기의 소재를 찾고 이야기를 듣는 사람들이 공감할 수 있도록 이야기를 설계할 수 있도록 지도한다."@ko ,
+        "영화나 영상으로 표현하고자 하는 생각을 효과적으로 전달할 수 있도록 지도하되 영상의 완성도를 떠나 아이디어가 영상화되는 과정을 전반적으로 이해하고 체험할 수 있도록 한다."@ko ,
+        "학습자가 일상을 영상으로 직접 기록해 봄으로써 보는 것으로서의 예술을 뛰어넘어 체험하고 향유하는 예술에 더 비중을 둘 수 있게 지도하도록 한다."@ko ,
+        "학습자가 영상을 통해 솔직하게 자신을 표현할 수 있도록 하고 아울러 촬영한 영상을 직접 편집할 수 있도록 지도한다."@ko ,
+        "작품 제작을 완성한 후에는 발표회를 통해 영화의 제작 과정과 제작 의도 등에 대해 이야기 나눌 수 있도록 하고 다른 작품들에 대해서도 분석하고 의견을 나누어봄으로써 열린 자세로 소통할 수 있도록 한다."@ko ,
+        "저작권과 관련하여 창작물을 만든 사람의 노력과 가치를 인정하는 태도를 가질 수 있도록 하며 불법적인 영상물의 제작, 유통, 소비가 이루어지지 않도록 한다."@ko ,
+        "과목의 특성상 창작과 관련된 평가에서는 주관성이 반영될 수밖에 없으므로 타당성과 공정성이 확보된 평가기준이 마련되도록 한다."@ko .
+ex:StorytellingCoreIdea a ex:CoreIdea ; ex:description "이야기하기는 영상 제작의 가장 기초단계로서 하나의 이야기는 다양한 매체를 통해서 변형되어 표현되기도 한다."@ko .
+ex:RecordingExpressingCoreIdea a ex:CoreIdea ; ex:description "영화는 우리의 생활을 기록할 수 있으며 자기 생각과 이야기를 영상으로 표현할 수 있는 매체이다."@ko .
+ex:StoryAndStorytelling a ex:KnowledgeUnderstanding ; rdfs:label "스토리와 이야기하기"@ko ; ex:gradeBand "고등학교"@ko .
+ex:FilmLanguageVisualExpression a ex:KnowledgeUnderstanding ; rdfs:label "영화 언어와 영상 표현"@ko ; ex:gradeBand "고등학교"@ko .
+ex:VariousVideoMedia a ex:KnowledgeUnderstanding ; rdfs:label "다양한 영상 매체"@ko ; ex:gradeBand "고등학교"@ko .
+ex:TurnThoughtsIntoStory a ex:ProcessSkill ; rdfs:label "자기 생각을 이야기로 만들기"@ko ; ex:gradeBand "고등학교"@ko .
+ex:WriteScenario a ex:ProcessSkill ; rdfs:label "시나리오 쓰기"@ko ; ex:gradeBand "고등학교"@ko .
+ex:MakeVideo a ex:ProcessSkill ; rdfs:label "영상 만들기"@ko ; ex:gradeBand "고등학교"@ko .
+ex:ExpressOneselfHonestly a ex:ValueAttitude ; rdfs:label "솔직하고 적극적으로 자신을 표현할 수 있는 태도"@ko ; ex:gradeBand "고등학교"@ko .
+ex:CommunicateOpenly a ex:ValueAttitude ; rdfs:label "열린 자세로 소통할 수 있는 태도"@ko ; ex:gradeBand "고등학교"@ko .
+ex:UnderstandCreatorRoleRights a ex:ValueAttitude ; rdfs:label "창작자의 역할과 권리를 이해하는 태도"@ko ; ex:gradeBand "고등학교"@ko .
+ex:FilmAndLifeStd01_01 a ex:AchievementStandard ;
+    rdfs:label "[12영삶01-01]"@ko ;
+    ex:standardCode "[12영삶01-01]"@ko ;
+    ex:standardText "영화의 스토리가 될 수 있는 이야기를 살펴보고 효과적으로 이야기를 표현하는 방법을 탐구한다."@ko ;
+    ex:targetVerb "탐구하다"@ko ;
+    ex:standardExplanation "[12영삶01-01]은 영화의 스토리가 될 수 있는 요건을 살펴보고 효과적으로 이야기를 전달하는 방법을 탐색하기 위해 설정하였다. 학습자가 말하고자 하는 내용이 스토리의 형태로 사람들에게 효과적으로 표현될 수 있는 다양한 방식을 탐구하고 실습할 수 있도록 하며 영화뿐만 아니라 다양한 매체를 통한 이야기하기 방식을 살펴볼 수 있도록 한다."@ko .
+ex:FilmAndLifeStd01_02 a ex:AchievementStandard ;
+    rdfs:label "[12영삶01-02]"@ko ;
+    ex:standardCode "[12영삶01-02]"@ko ;
+    ex:standardText "영화언어와 영상 표현 방식에 관해 탐구하고 자기 생각을 영상으로 표현한다."@ko ;
+    ex:targetVerb "표현하다"@ko ;
+    ex:standardExplanation "[12영삶01-02]는 학습자의 생각을 영상으로 표현할 수 있는 능력을 기를 수 있도록 설정하였다. 학습자의 아이디어를 사진이나 영화, 인터넷 방송 등 다양한 영상 매체의 콘텐츠로 제작하거나 일상의 다양한 모습을 영상으로 담는 체험을 통해 학습자는 자기 생각이 영상화되는 과정을 경험하고 또 영상이라는 매체를 생활에 접목하는 과정을 살펴보게 된다."@ko .
+ex:FilmAndLifeStd01_03 a ex:AchievementStandard ;
+    rdfs:label "[12영삶01-03]"@ko ;
+    ex:standardCode "[12영삶01-03]"@ko ;
+    ex:standardText "인터넷 방송, 1인 미디어 등 다양한 영상 매체를 살펴보고 아이디어를 영상으로 기획하고 제작한다."@ko ;
+    ex:targetVerb "제작하다"@ko ;
+    ex:standardExplanation "[12영삶01-03]은 인터넷 방송, 1인 미디어, OTT 서비스, 미디어 아트 등 디지털 환경의 발전과 4차 산업혁명 등으로 인해 확장되어 가는 다양한 영상 매체의 특성을 파악하고 하나의 스토리가 매체의 특성에 따라 어떻게 가공되는지를 살펴볼 수 있도록 설정하였다. 스토리는 다양한 콘텐츠의 원천이 되는 동시에 문화산업의 핵심 요소가 되고 있는데 학습자가 다양한 매체 환경을 이해하고 스토리의 중요성을 인식할 수 있도록 한다."@ko .
+
+# --- 영역: 영화로 세상읽기 ---
+ex:ReadingWorldThroughFilm a ex:LearningArea ;
+    rdfs:label "영화로 세상읽기"@ko ;
+    ex:hasCoreIdea ex:InterpretingLifeCoreIdea, ex:ReflectingLifeSocietyCoreIdea ;
+    ex:hasContentElement ex:MethodsOfAppreciation, ex:PlotAndTheme, ex:EventsInFilm, ex:AnalyzeFilmContent,
+        ex:ExploreFilmTheme, ex:ResearchFilmFestivals, ex:ListenToOtherViews, ex:GraspProblemsAccurately,
+        ex:ExaminePhenomenaFromPerspectives ;
+    ex:hasStandard ex:FilmAndLifeStd02_01, ex:FilmAndLifeStd02_02, ex:FilmAndLifeStd02_03 ;
+    ex:applicationNote "‘영화로 세상읽기’ 영역은 영화가 우리의 삶과 관련된 가장 일반적인 활동으로서 ‘영화 감상’을 효과적으로 하는 방법에 대해 살펴볼 수 있도록 설정하였다."@ko ,
+        "삶과 관련하여 영화에서 다양한 문제를 다루고 표현하는 방식을 탐구할 수 있도록 지도하고 일상적 사실성을 재현하려는 영화의 특성을 영화 감상을 통해 살펴볼 수 있도록 한다."@ko ,
+        "‘영화를 어떻게 보고 이해할 것인가’ 하는 근본적인 문제를 영화 감상과 토의·토론 학습 과정을 통해 탐구할 수 있도록 한다."@ko ,
+        "영화를 보고 인상적인 장면에 대한 기억을 이야기하도록 하고 그것에 대한 자기 생각을 정리하여 말할 수 있도록 한다."@ko ,
+        "영화를 감상하고 줄거리와 주제에 관해 이야기하도록 하고 학습자가 자기 생각을 정리하여 감상문으로 쓸 수 있도록 한다."@ko ,
+        "실제 사건을 다룬 영화를 바탕으로 영화에서 내용과 주제를 적용하는 방식을 탐구해 보고 실제 사건과 관련한 내용도 다양한 관점으로 토의·토론 학습할 수 있도록 한다."@ko ,
+        "주변에서 개최되는 영화제의 영화 상영이나 부대 행사 등에 참여하고 경험에 대한 토의·토론 학습을 통해 알차게 영화제를 즐기는 방식에 관해서도 이야기하여 예술 향유에 대한 즐거움을 느낄 수 있도록 한다."@ko .
+ex:InterpretingLifeCoreIdea a ex:CoreIdea ; ex:description "영화 감상은 인간, 사회, 역사, 예술 등 다양한 관점에서 영화와 우리의 삶을 바라보게 하고 해석하게 한다."@ko .
+ex:ReflectingLifeSocietyCoreIdea a ex:CoreIdea ; ex:description "영화의 내용은 우리의 삶과 사회를 반영하고 있으며 관객들은 그것에 공감하고 카타르시스를 느끼기도 한다."@ko .
+ex:MethodsOfAppreciation a ex:KnowledgeUnderstanding ; rdfs:label "영화 감상의 방법"@ko ; ex:gradeBand "고등학교"@ko .
+ex:PlotAndTheme a ex:KnowledgeUnderstanding ; rdfs:label "영화의 줄거리와 주제"@ko ; ex:gradeBand "고등학교"@ko .
+ex:EventsInFilm a ex:KnowledgeUnderstanding ; rdfs:label "영화의 사건"@ko ; ex:gradeBand "고등학교"@ko .
+ex:AnalyzeFilmContent a ex:ProcessSkill ; rdfs:label "영화 내용 분석하기"@ko ; ex:gradeBand "고등학교"@ko .
+ex:ExploreFilmTheme a ex:ProcessSkill ; rdfs:label "영화 주제 탐구하기"@ko ; ex:gradeBand "고등학교"@ko .
+ex:ResearchFilmFestivals a ex:ProcessSkill ; rdfs:label "영화제 조사하기"@ko ; ex:gradeBand "고등학교"@ko .
+ex:ListenToOtherViews a ex:ValueAttitude ; rdfs:label "다른 견해를 경청하는 태도"@ko ; ex:gradeBand "고등학교"@ko .
+ex:GraspProblemsAccurately a ex:ValueAttitude ; rdfs:label "문제를 정확하게 파악하려는 자세"@ko ; ex:gradeBand "고등학교"@ko .
+ex:ExaminePhenomenaFromPerspectives a ex:ValueAttitude ; rdfs:label "다양한 관점에서 현상을 살펴보는 태도"@ko ; ex:gradeBand "고등학교"@ko .
+ex:FilmAndLifeStd02_01 a ex:AchievementStandard ;
+    rdfs:label "[12영삶02-01]"@ko ;
+    ex:standardCode "[12영삶02-01]"@ko ;
+    ex:standardText "영화를 감상하고 영화에 나타난 삶의 모습에 관해 탐구한다."@ko ;
+    ex:targetVerb "탐구하다"@ko ;
+    ex:standardExplanation "[12영삶02-01], [12영삶02-02]는 우리의 삶과 우리를 둘러싸고 있는 환경이 영화에서 어떤 방식으로 표현되고 있는지 살펴볼 수 있도록 설정하였다. 이야기가 사람들의 삶과 현실을 어떻게 반영하고 있는지를 살펴보고 이것이 영화에 적용되는 과정의 관찰을 통해 우리의 삶과 관련된 문제 해결을 위한 방법을 찾을 수 있도록 한다."@ko .
+ex:FilmAndLifeStd02_02 a ex:AchievementStandard ;
+    rdfs:label "[12영삶02-02]"@ko ;
+    ex:standardCode "[12영삶02-02]"@ko ;
+    ex:standardText "실제 사건을 다룬 영화를 찾아본 후 다양한 관점으로 영화를 분석한다."@ko ;
+    ex:targetVerb "분석하다"@ko ;
+    ex:standardExplanation "[12영삶02-01], [12영삶02-02]는 우리의 삶과 우리를 둘러싸고 있는 환경이 영화에서 어떤 방식으로 표현되고 있는지 살펴볼 수 있도록 설정하였다. 이야기가 사람들의 삶과 현실을 어떻게 반영하고 있는지를 살펴보고 이것이 영화에 적용되는 과정의 관찰을 통해 우리의 삶과 관련된 문제 해결을 위한 방법을 찾을 수 있도록 한다."@ko .
+ex:FilmAndLifeStd02_03 a ex:AchievementStandard ;
+    rdfs:label "[12영삶02-03]"@ko ;
+    ex:standardCode "[12영삶02-03]"@ko ;
+    ex:standardText "우리나라의 다양한 영화제를 조사한 후 관심 있는 영화제에 대해 탐색한다."@ko ;
+    ex:targetVerb "탐색하다"@ko ;
+    ex:standardExplanation "[12영삶02-03]은 영화 창작자들을 위한 상영의 장으로서의 영화제의 의의를 뛰어넘어 관객들이 관람하고 즐기는, 참여의 장으로서의 영화제의 의의를 찾고 영화가 우리의 삶에 전해주는 다양한 가치를 탐색해 볼 수 있도록 설정하였다."@ko .
+
+# --- 영역: 영화로 탐색하기 ---
+ex:ExploringThroughFilm a ex:LearningArea ;
+    rdfs:label "영화로 탐색하기"@ko ;
+    ex:hasCoreIdea ex:SelfReflectionCoreIdea, ex:CareerExplorationCoreIdea ;
+    ex:hasContentElement ex:SceneAnalysis, ex:FilmRelatedCareers, ex:FutureIndustryAndFilm, ex:ReflectThroughCharacters,
+        ex:ExploreJobsInFilms, ex:ExploreFilmRelatedJobs, ex:PositiveSelfJudgment, ex:ActiveProblemSolving,
+        ex:OpenToExploringValues, ex:FutureOriented ;
+    ex:hasStandard ex:FilmAndLifeStd03_01, ex:FilmAndLifeStd03_02 ;
+    ex:applicationNote "영화는 종합예술로서 다양한 분야와 융합할 수 있는 특성이 있음을 설명하고 여러 분야에서 학문 연구를 위한 도구적 측면에서도 활용되고 있음을 살펴볼 수 있도록 한다."@ko ,
+        "‘영화와 삶’ 과목은 영화를 활용한 교육이기도 하다. 영화의 주제나 내용, 영화 속 등장인물의 상황을 통해 나의 삶을 반추해볼 수도 있고 그 속에서 삶의 지혜를 찾아볼 수 있도록 한다."@ko ,
+        "디지털 기술의 발전에 따라 다양한 매체와 분야가 생겨나고 또한 이와 관련한 다양한 직무도 생겨나고 있는데 학습자에게 영화 분야에 대한 학습을 통해 접근 가능한 직무를 탐색할 수 있도록 한다."@ko ,
+        "학습자의 진로 희망과 관련된 영화를 찾아본 후 영화에 나타난 직업의 모습을 탐구하거나 동시에 영화와 관련된 다양한 직업을 조사하고 토의·토론 학습하도록 한다."@ko ,
+        "미래의 핵심역량으로서 영화가 가지는 비전을 살펴볼 수 있도록 하고 스토리와 이미지, 테크놀로지가 영화 분야에 어떻게 연관되고 적용되는지 탐색할 수 있도록 한다."@ko ,
+        "이 영역에서는 학습자가 다양한 가치를 탐색할 수 있는 열린 태도를 갖도록 하는 것이 중요하며 미래 지향적 태도를 통해 적극적으로 자신의 진로 탐색을 할 수 있도록 지도한다."@ko ,
+        "평가는 지식·이해 중심의 평가보다 자료 탐색, 사례 조사, 발표, 토의·토론 학습 등의 학습 활동 및 과정을 평가할 수 있는 적절한 기준을 마련하고 평가한다. 실습 작품에 대한 평가의 경우 평가 요소에 학습자들의 평가도 포함하는 등 객관적인 평가도구를 개발하여 평가한다."@ko .
+ex:SelfReflectionCoreIdea a ex:CoreIdea ; ex:description "영화를 통해 자신을 되돌아보고 성찰할 기회를 얻게 한다."@ko .
+ex:CareerExplorationCoreIdea a ex:CoreIdea ; ex:description "영화는 미래의 핵심 키워드라 할 수 있는 ‘이미지’, ‘스토리’, ‘기술’이 결합하고 있는 분야로서 다양한 진로 탐색을 할 수 있다."@ko .
+ex:SceneAnalysis a ex:KnowledgeUnderstanding ; rdfs:label "영화 장면 분석"@ko ; ex:gradeBand "고등학교"@ko .
+ex:FilmRelatedCareers a ex:KnowledgeUnderstanding ; rdfs:label "영화와 관련된 직업 세계"@ko ; ex:gradeBand "고등학교"@ko .
+ex:FutureIndustryAndFilm a ex:KnowledgeUnderstanding ; rdfs:label "미래 산업의 변화와 영화"@ko ; ex:gradeBand "고등학교"@ko .
+ex:ReflectThroughCharacters a ex:ProcessSkill ; rdfs:label "영화 속 인물의 상황을 통해 자신의 삶을 성찰하기"@ko ; ex:gradeBand "고등학교"@ko .
+ex:ExploreJobsInFilms a ex:ProcessSkill ; rdfs:label "영화 속의 직업 탐색하기"@ko ; ex:gradeBand "고등학교"@ko .
+ex:ExploreFilmRelatedJobs a ex:ProcessSkill ; rdfs:label "영화와 관련된 직업 탐색하기"@ko ; ex:gradeBand "고등학교"@ko .
+ex:PositiveSelfJudgment a ex:ValueAttitude ; rdfs:label "자신에 대해 긍정적으로 판단하고 결정할 수 있는 의지"@ko ; ex:gradeBand "고등학교"@ko .
+ex:ActiveProblemSolving a ex:ValueAttitude ; rdfs:label "적극적으로 문제 해결을 하는 태도"@ko ; ex:gradeBand "고등학교"@ko .
+ex:OpenToExploringValues a ex:ValueAttitude ; rdfs:label "다양한 가치를 탐색할 수 있는 열린 태도"@ko ; ex:gradeBand "고등학교"@ko .
+ex:FutureOriented a ex:ValueAttitude ; rdfs:label "미래 지향적 태도"@ko ; ex:gradeBand "고등학교"@ko .
+ex:FilmAndLifeStd03_01 a ex:AchievementStandard ;
+    rdfs:label "[12영삶03-01]"@ko ;
+    ex:standardCode "[12영삶03-01]"@ko ;
+    ex:standardText "영화의 장면과 인물의 상황을 통해 자신의 삶을 성찰한다."@ko ;
+    ex:targetVerb "성찰하다"@ko ;
+    ex:standardExplanation "[12영삶03-01]은 영화의 장면과 등장인물의 상황을 자신의 삶에 대입하여 되돌아보고 성찰해볼 수 있도록 하여 영화로부터 삶의 지혜를 찾고 문제에 대한 해결책을 탐색할 수 있도록 설정하였다."@ko .
+ex:FilmAndLifeStd03_02 a ex:AchievementStandard ;
+    rdfs:label "[12영삶03-02]"@ko ;
+    ex:standardCode "[12영삶03-02]"@ko ;
+    ex:standardText "나의 진로 희망과 관련된 영화를 찾아본 후 영화에 나타난 직업의 모습에 관해 탐구한다."@ko ;
+    ex:targetVerb "탐구하다"@ko ;
+    ex:standardExplanation "[12영삶03-02]는 미래의 핵심역량으로서의 영화의 가치에 대한 분석과 그 중요성을 살펴보도록 하고 영화와 관련된 다양한 진로 탐색이 이루어질 수 있도록 설정하였다. 스토리와 이미지 그리고 테크놀로지는 미래의 핵심 가치로서 그 중요성이 커지고 있으며 영화는 이 가치들이 결합하고 있는 분야로서 관련 진로도 다양하게 확장되고 있다. 학습자에게 다양한 진로 탐색을 통해 자기를 관리할 수 있는 능력과 미래를 상상할 수 있는 능력을 기를 수 있도록 한다."@ko .
+

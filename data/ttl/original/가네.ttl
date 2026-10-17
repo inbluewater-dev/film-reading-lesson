@@ -1,0 +1,176 @@
+@prefix ex:   <http://example.org/il-lesson/> .
+@prefix rdf:  <http://www.w3.org/1999/02/22-rdf-syntax-ns#> .
+@prefix rdfs: <http://www.w3.org/2000/01/rdf-schema#> .
+@prefix owl:  <http://www.w3.org/2002/07/owl#> .
+@prefix xsd:  <http://www.w3.org/2001/XMLSchema#> .
+
+# Ontology
+ex:GagneInstructionalEventsOntology a owl:Ontology ;
+    rdfs:label "가네의 9가지 수업사태를 활용한 정보활용교육 온톨로지"@ko ;
+    rdfs:comment "가네의 9가지 수업사태와 정보활용교육 적용 전략을 RDF, RDFS, OWL로 표현한 예시."@ko .
+
+# Classes
+ex:InstructionalEvent a owl:Class ;
+    rdfs:label "수업사태"@ko ;
+    rdfs:comment "수업 과정에서 학습을 촉진하기 위해 설계하는 교수 사건."@ko .
+
+ex:InformationLiteracyLesson a owl:Class ;
+    rdfs:label "정보활용교육 수업"@ko .
+
+ex:TeachingStrategy a owl:Class ;
+    rdfs:label "교수 전략"@ko .
+
+ex:LearningActivity a owl:Class ;
+    rdfs:label "학습 활동"@ko .
+
+ex:LearningResource a owl:Class ;
+    rdfs:label "학습 자료"@ko .
+
+ex:AssessmentMethod a owl:Class ;
+    rdfs:label "평가 방법"@ko .
+
+# Properties
+ex:hasEvent a owl:ObjectProperty ;
+    rdfs:domain ex:InformationLiteracyLesson ;
+    rdfs:range ex:InstructionalEvent ;
+    rdfs:label "수업사태를 포함한다"@ko .
+
+ex:hasStrategy a owl:ObjectProperty ;
+    rdfs:domain ex:InstructionalEvent ;
+    rdfs:range ex:TeachingStrategy ;
+    rdfs:label "교수 전략을 사용한다"@ko .
+
+ex:hasActivity a owl:ObjectProperty ;
+    rdfs:domain ex:InstructionalEvent ;
+    rdfs:range ex:LearningActivity ;
+    rdfs:label "학습 활동을 포함한다"@ko .
+
+ex:usesResource a owl:ObjectProperty ;
+    rdfs:domain ex:InstructionalEvent ;
+    rdfs:range ex:LearningResource ;
+    rdfs:label "학습 자료를 활용한다"@ko .
+
+ex:hasAssessment a owl:ObjectProperty ;
+    rdfs:domain ex:InstructionalEvent ;
+    rdfs:range ex:AssessmentMethod ;
+    rdfs:label "평가 방법을 사용한다"@ko .
+
+ex:sequenceNumber a owl:DatatypeProperty ;
+    rdfs:domain ex:InstructionalEvent ;
+    rdfs:range xsd:integer ;
+    rdfs:label "수업사태 순서"@ko .
+
+ex:exampleDescription a owl:DatatypeProperty ;
+    rdfs:domain ex:InstructionalEvent ;
+    rdfs:range xsd:string ;
+    rdfs:label "정보활용교육 적용 사례"@ko .
+
+ex:nextEvent a owl:ObjectProperty, owl:TransitiveProperty ;
+    rdfs:domain ex:InstructionalEvent ;
+    rdfs:range ex:InstructionalEvent ;
+    rdfs:label "다음 수업사태"@ko .
+
+# Lesson instance
+ex:InformationLiteracyLesson1 a ex:InformationLiteracyLesson ;
+    rdfs:label "신문 사설의 주장 분석 및 정보 탐색 수업"@ko ;
+    ex:hasEvent ex:event1, ex:event2, ex:event3, ex:event4, ex:event5,
+                ex:event6, ex:event7, ex:event8, ex:event9 .
+
+# Event 1: Gain attention
+ex:event1 a ex:InstructionalEvent ;
+    ex:sequenceNumber 1 ;
+    rdfs:label "주의집중"@ko ;
+    ex:hasStrategy ex:strategy1 ;
+    ex:usesResource ex:video1 ;
+    ex:exampleDescription "도서관 이용의 중요성을 다룬 짧은 영상이나 상반된 주장을 담은 뉴스 화면을 보여 주고, 무엇을 확인해야 하는지 질문한다."@ko ;
+    ex:nextEvent ex:event2 .
+ex:strategy1 a ex:TeachingStrategy ; rdfs:label "영상·뉴스·질문으로 문제 상황 제시"@ko .
+ex:video1 a ex:LearningResource ; rdfs:label "도서관 이용 또는 뉴스 영상"@ko .
+
+# Event 2: Inform learners of objectives
+ex:event2 a ex:InstructionalEvent ;
+    ex:sequenceNumber 2 ;
+    rdfs:label "학습목표 제시"@ko ;
+    ex:hasStrategy ex:strategy2 ;
+    ex:usesResource ex:presentation2 ;
+    ex:exampleDescription "파워포인트로 '사설에서 주장과 근거를 구분하고, 신뢰할 만한 자료로 주장을 확인할 수 있다'는 학습목표를 제시한다."@ko ;
+    ex:nextEvent ex:event3 .
+ex:strategy2 a ex:TeachingStrategy ; rdfs:label "학습목표를 명시적으로 안내"@ko .
+ex:presentation2 a ex:LearningResource ; rdfs:label "학습목표 안내용 파워포인트"@ko .
+
+# Event 3: Stimulate recall of prior learning
+ex:event3 a ex:InstructionalEvent ;
+    ex:sequenceNumber 3 ;
+    rdfs:label "선수학습 능력 재생"@ko ;
+    ex:hasStrategy ex:strategy3 ;
+    ex:hasActivity ex:activity3 ;
+    ex:exampleDescription "영상자료의 구조를 학습하기 전에 인쇄자료의 제목·본문·출처를 어떻게 확인했는지 질문한다."@ko ;
+    ex:nextEvent ex:event4 .
+ex:strategy3 a ex:TeachingStrategy ; rdfs:label "구두 질문과 짧은 진단 문항"@ko .
+ex:activity3 a ex:LearningActivity ; rdfs:label "인쇄자료의 구성 요소 말하기"@ko .
+
+# Event 4: Present the content
+ex:event4 a ex:InstructionalEvent ;
+    ex:sequenceNumber 4 ;
+    rdfs:label "학습자료 제시"@ko ;
+    ex:hasStrategy ex:strategy4 ;
+    ex:usesResource ex:conceptMap4, ex:editorial4 ;
+    ex:exampleDescription "사설을 읽기 전에 주장·근거·자료 출처의 관계를 개념도로 보여 주고, 짧은 사설 사례를 단계적으로 제시한다."@ko ;
+    ex:nextEvent ex:event5 .
+ex:strategy4 a ex:TeachingStrategy ; rdfs:label "개념도와 사례를 순차적으로 제시"@ko .
+ex:conceptMap4 a ex:LearningResource ; rdfs:label "주장·근거·출처 개념도"@ko .
+ex:editorial4 a ex:LearningResource ; rdfs:label "분석용 신문 사설"@ko .
+
+# Event 5: Provide learning guidance
+ex:event5 a ex:InstructionalEvent ;
+    ex:sequenceNumber 5 ;
+    rdfs:label "학습 지침 제공"@ko ;
+    ex:hasStrategy ex:strategy5 ;
+    ex:usesResource ex:organizer5 ;
+    ex:exampleDescription "주장·근거·반론·출처를 구분할 수 있도록 그래픽 조직자와 힌트를 제공하되, 정답을 직접 알려 주지는 않는다."@ko ;
+    ex:nextEvent ex:event6 .
+ex:strategy5 a ex:TeachingStrategy ; rdfs:label "힌트·질문·그래픽 조직자 제공"@ko .
+ex:organizer5 a ex:LearningResource ; rdfs:label "사설 내용구조 그래픽 조직자"@ko .
+
+# Event 6: Elicit performance
+ex:event6 a ex:InstructionalEvent ;
+    ex:sequenceNumber 6 ;
+    rdfs:label "학생 수행 요구"@ko ;
+    ex:hasStrategy ex:strategy6 ;
+    ex:hasActivity ex:activity6 ;
+    ex:exampleDescription "학생이 사설에서 주장을 뒷받침하는 문단을 찾아 표시하고, 주장과 근거를 활동지에 정리하도록 한다."@ko ;
+    ex:nextEvent ex:event7 .
+ex:strategy6 a ex:TeachingStrategy ; rdfs:label "찾기·표시하기·요약하기·발표하기"@ko .
+ex:activity6 a ex:LearningActivity ; rdfs:label "주장과 근거를 찾아 활동지 작성"@ko .
+
+# Event 7: Provide feedback
+ex:event7 a ex:InstructionalEvent ;
+    ex:sequenceNumber 7 ;
+    rdfs:label "피드백 제공"@ko ;
+    ex:hasStrategy ex:strategy7 ;
+    ex:hasActivity ex:activity7 ;
+    ex:exampleDescription "교사가 활동지를 확인하며 정확한 분류를 칭찬하고, 잘못 분류한 부분에는 이유와 수정 단서를 제시한다."@ko ;
+    ex:nextEvent ex:event8 .
+ex:strategy7 a ex:TeachingStrategy ; rdfs:label "즉각적이고 구체적인 피드백"@ko .
+ex:activity7 a ex:LearningActivity ; rdfs:label "활동지 수정 및 동료 의견 나누기"@ko .
+
+# Event 8: Assess performance
+ex:event8 a ex:InstructionalEvent ;
+    ex:sequenceNumber 8 ;
+    rdfs:label "성취 행동 평가"@ko ;
+    ex:hasStrategy ex:strategy8 ;
+    ex:hasAssessment ex:assessment8 ;
+    ex:exampleDescription "처음 보지 않은 사설을 제시하고, 학생이 주장 문장에 밑줄을 긋고 근거를 한 가지 찾아 쓰게 한다."@ko ;
+    ex:nextEvent ex:event9 .
+ex:strategy8 a ex:TeachingStrategy ; rdfs:label "새 사례를 활용한 개별 평가"@ko .
+ex:assessment8 a ex:AssessmentMethod ; rdfs:label "주장 식별 및 근거 찾기 수행평가"@ko .
+
+# Event 9: Enhance retention and transfer
+ex:event9 a ex:InstructionalEvent ;
+    ex:sequenceNumber 9 ;
+    rdfs:label "파지와 전이"@ko ;
+    ex:hasStrategy ex:strategy9 ;
+    ex:hasActivity ex:activity9 ;
+    ex:exampleDescription "학생이 학교도서관 목록과 국립중앙도서관에서 관련 자료를 각각 검색하고, 출처를 비교해 다른 과제에도 적용한다."@ko .
+ex:strategy9 a ex:TeachingStrategy ; rdfs:label "반복 연습과 새로운 상황에 적용"@ko .
+ex:activity9 a ex:LearningActivity ; rdfs:label "학교도서관 및 국립중앙도서관 자료 검색·비교"@ko .

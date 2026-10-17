@@ -1,0 +1,162 @@
+@prefix rdf: <http://www.w3.org/1999/02/22-rdf-syntax-ns#> .
+@prefix rdfs: <http://www.w3.org/2000/01/rdf-schema#> .
+@prefix owl: <http://www.w3.org/2002/07/owl#> .
+@prefix xsd: <http://www.w3.org/2001/XMLSchema#> .
+@prefix ex: <http://example.org/pisa#> .
+
+### Classes (클래스 정의)
+
+ex:TextClassificationCategory a owl:Class ;
+    rdfs:label "텍스트 분류 기준" .
+
+ex:TextTypeAttribute a owl:Class ;
+    rdfs:label "텍스트 속성" .
+
+ex:TextExample a owl:Class ;
+    rdfs:label "텍스트 조합 사례" .
+
+
+### Properties (속성 정의)
+
+ex:hasCategory a owl:ObjectProperty ;
+    rdfs:domain ex:TextTypeAttribute ;
+    rdfs:range ex:TextClassificationCategory ;
+    rdfs:label "분류 기준에 속함" .
+
+ex:hasSourceMaterialType a owl:ObjectProperty ;
+    rdfs:domain ex:TextExample ;
+    rdfs:range ex:TextTypeAttribute ;
+    rdfs:label "자료 유형" .
+
+ex:hasStructureAndNavigation a owl:ObjectProperty ;
+    rdfs:domain ex:TextExample ;
+    rdfs:range ex:TextTypeAttribute ;
+    rdfs:label "조직과 탐색" .
+
+ex:hasFormat a owl:ObjectProperty ;
+    rdfs:domain ex:TextExample ;
+    rdfs:range ex:TextTypeAttribute ;
+    rdfs:label "체재" .
+
+ex:hasContentType a owl:ObjectProperty ;
+    rdfs:domain ex:TextExample ;
+    rdfs:range ex:TextTypeAttribute ;
+    rdfs:label "유형(내용)" .
+
+ex:contentDescription a owl:DatatypeProperty ;
+    rdfs:domain [ owl:unionOf (ex:TextTypeAttribute ex:TextExample) ] ;
+    rdfs:range xsd:string ;
+    rdfs:label "내용 설명" .
+
+
+### Individuals (인스턴스 정의)
+
+# 1. 텍스트 분류 기준 (Categories)
+ex:SourceMaterial a ex:TextClassificationCategory ;
+    rdfs:label "자료" .
+
+ex:StructureAndNavigation a ex:TextClassificationCategory ;
+    rdfs:label "조직과 탐색" .
+
+ex:Format a ex:TextClassificationCategory ;
+    rdfs:label "체재" .
+
+ex:ContentType a ex:TextClassificationCategory ;
+    rdfs:label "유형(내용)" .
+
+
+# 2. 세부 속성 (Attributes)
+# 자료 기준
+ex:SingleText a ex:TextTypeAttribute ;
+    rdfs:label "단일 텍스트" ;
+    ex:hasCategory ex:SourceMaterial ;
+    ex:contentDescription "한 명(혹은 복수) 저자·집필/출판 시기·제목 등의 정보를 포함한 하나의 텍스트" .
+
+ex:MultipleText a ex:TextTypeAttribute ;
+    rdfs:label "다중 텍스트" ;
+    ex:hasCategory ex:SourceMaterial ;
+    ex:contentDescription "각각 다른 저자·출판 시기·제목 등 서지 사항을 가진 복수의 텍스트" .
+
+# 조직과 탐색 기준
+ex:StaticText a ex:TextTypeAttribute ;
+    rdfs:label "정적" ;
+    ex:hasCategory ex:StructureAndNavigation ;
+    ex:contentDescription "조직·탐색 도구의 밀도가 낮은, 주로 선형적으로 조직된 한 두 쪽의 텍스트" .
+
+ex:DynamicText a ex:TextTypeAttribute ;
+    rdfs:label "동적" ;
+    ex:hasCategory ex:StructureAndNavigation ;
+    ex:contentDescription "조직이 복잡하고 비선형적이며 탐색 도구 밀도가 높은 텍스트(하이퍼텍스트)" .
+
+# 체재 기준
+ex:ContinuousText a ex:TextTypeAttribute ;
+    rdfs:label "연속적" ;
+    ex:hasCategory ex:Format ;
+    ex:contentDescription "문단을 구성하는 문장들로 이루어진 텍스트" .
+
+ex:NonContinuousText a ex:TextTypeAttribute ;
+    rdfs:label "비연속적" ;
+    ex:hasCategory ex:Format ;
+    ex:contentDescription "표·그래프·다이어그램·광고·색인·양식 등으로 구성된 텍스트" .
+
+ex:MixedText a ex:TextTypeAttribute ;
+    rdfs:label "혼합적" ;
+    ex:hasCategory ex:Format ;
+    ex:contentDescription "연속적 요소와 비연속적 요소들을 모두 포함한 텍스트" .
+
+# 유형(내용) 기준
+ex:Description a ex:TextTypeAttribute ;
+    rdfs:label "기술" ;
+    ex:hasCategory ex:ContentType ;
+    ex:contentDescription "사물의 속성 정보 제공 · 장소 기술, 제품 절차 설명" .
+
+ex:Narration a ex:TextTypeAttribute ;
+    rdfs:label "서사" ;
+    ex:hasCategory ex:ContentType ;
+    ex:contentDescription "시간 속 사건 정보 제공 · 리포트, 뉴스, 소설, 극본" .
+
+ex:Exposition a ex:TextTypeAttribute ;
+    rdfs:label "설명" ;
+    ex:hasCategory ex:ContentType ;
+    ex:contentDescription "요소 간 관계 설명 · 학술적 에세이, 개념도, 통계 그래프" .
+
+ex:Argumentation a ex:TextTypeAttribute ;
+    rdfs:label "논증" ;
+    ex:hasCategory ex:ContentType ;
+    ex:contentDescription "개념·명제 간 관계 제시 · 사설, 광고, 리뷰, 자유게시판 글" .
+
+ex:Instruction a ex:TextTypeAttribute ;
+    rdfs:label "지시" ;
+    ex:hasCategory ex:ContentType ;
+    ex:contentDescription "수행 방법 안내 · 레시피, 송금 장치 안내, 사용 설명서" .
+
+ex:Transaction a ex:TextTypeAttribute ;
+    rdfs:label "교섭" ;
+    ex:hasCategory ex:ContentType ;
+    ex:contentDescription "사회적 목적 달성을 위한 글 · 편지, 이메일, 문자메시지" .
+
+
+# 3. 텍스트 조합 사례 (Examples)
+ex:Example1 a ex:TextExample ;
+    rdfs:label "사례 1" ;
+    ex:hasSourceMaterialType ex:SingleText ;
+    ex:hasStructureAndNavigation ex:StaticText ;
+    ex:hasFormat ex:ContinuousText ;
+    ex:hasContentType ex:Exposition ;
+    ex:contentDescription "지구 온난화는 인간 활동으로 인해 대기 중 이산화탄소 농도가 증가하면서 발생한다. 산업화 이후 화석 연료 사용이 늘어나면서 온실가스 배출이 급격히 증가하였다. 그 결과 지구 평균 기온이 상승하고 있으며, 이는 빙하 감소, 해수면 상승, 이상 기후 현상 증가로 이어지고 있다." .
+
+ex:Example2 a ex:TextExample ;
+    rdfs:label "사례 2" ;
+    ex:hasSourceMaterialType ex:SingleText ;
+    ex:hasStructureAndNavigation ex:StaticText ;
+    ex:hasFormat ex:NonContinuousText ;
+    ex:hasContentType ex:Exposition ;
+    ex:contentDescription "[1981-2020년 연도별 평균기온] 통계 그래프 이미지 요소" .
+
+ex:Example3 a ex:TextExample ;
+    rdfs:label "사례 3" ;
+    ex:hasSourceMaterialType ex:SingleText ;
+    ex:hasStructureAndNavigation ex:StaticText ;
+    ex:hasFormat ex:ContinuousText ;
+    ex:hasContentType ex:Narration ;
+    ex:contentDescription "나는 지난 주말에 도서관에 갔다. 시험이 다가와서 조용한 곳에서 공부를 하고 싶었기 때문이다. 책을 읽고 문제를 풀다가 우연히 오랜만에 친구를 만났다. 우리는 함께 근처 식당에서 저녁을 먹으며 그동안의 이야기를 나누었다." .
