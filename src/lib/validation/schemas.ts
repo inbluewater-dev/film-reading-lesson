@@ -110,7 +110,7 @@ export const TextData = z.object({
 export const Manifest = z.object({
   ontologyVersion: z.string().regex(/^[0-9a-f]{12}$/),
   compiledAt: z.string(),
-  sources: z.array(z.object({ file: text, sha256: z.string(), triples: z.number().int() })),
+  sources: z.array(z.object({ file: text, origin: z.enum(['working', 'original']), sha256: z.string(), triples: z.number().int() })),
 });
 
 export type CurriculumData = z.infer<typeof CurriculumData>;

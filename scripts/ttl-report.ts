@@ -154,7 +154,7 @@ const nameDiff = gagneNames.map((n, i) => (n !== guideNames[i] ? `${i + 1}. ${gu
 
 w('## 3. 그 밖의 발견 사항');
 w();
-w(`- **readstrategy.ttl에 정의가 빠진 동사**: ${integrity['readstrategy.ttl'].undefinedRefs.join(', ') || '없음'} — ‘적용’ 기능이 참조하지만 \`a ex:ReadingVerb ; rdfs:label\` 정의 줄이 없음. 컴파일 시 IRI 이름에서 라벨 “적용하다”를 만들고 \`labelSource: "iri"\`로 표시함. 원본에 정의 한 줄을 추가할지 결정 필요.`);
+w(`- **readstrategy.ttl에 정의가 빠진 동사**: ${integrity['readstrategy.ttl'].undefinedRefs.join(', ') || '없음'} — ‘적용’ 기능이 참조하지만 \`a ex:ReadingVerb ; rdfs:label\` 정의 줄이 없음. 컴파일 시 IRI 이름에서 라벨 “적용하다”를 만들고 \`labelSource: "iri"\`로 표시함. → **결정: 작업본 \`data/ttl/working/readstrategy.ttl\`에 정의 한 줄 추가**(원본은 보존). 컴파일은 작업본을 우선 사용.`);
 w(`- **여러 기능에 속한 동사** ${sharedVerbs.length}개: ${sharedVerbs.map((v) => `${v.label}(${v.functionIds.map((f) => reading.functions.find((x) => x.id === f)!.label).join('·')})`).join(', ')} — 추천 시 두 기능 모두 후보가 됨.`);
 w(`- **여러 기능에 속한 전략** ${sharedStrats.length}개 (예: ${sharedStrats.slice(0, 5).map((s) => s.label).join(', ')} …) — 정상(가이드 §3.2).`);
 w(`- **가네 사태 이름이 가이드 표기와 다름** ${nameDiff.length}곳: ${nameDiff.join(' / ')}. 앱 화면에는 TTL 표기를 사용함.`);

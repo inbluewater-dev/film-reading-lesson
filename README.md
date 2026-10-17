@@ -17,6 +17,18 @@
    npm run dev            # http://localhost:5173 에서 열기
    ```
 
+## 로컬 모드 테스트 계정
+
+로컬 모드(`VITE_DATA_MODE=local`)에서는 처음 열 때 아래 계정이 자동으로 만들어집니다. **실서비스(Firebase)에서는 절대 같은 비밀번호를 쓰지 마세요.**
+
+| 아이디 | 비밀번호 | 역할 |
+|---|---|---|
+| `admin01` | `admin1234` | 관리자 |
+| `teacher01` | `teacher1234` | 교사 |
+
+- 가입 코드: `film2026` (관리자 화면에서 변경 가능)
+- 데이터는 브라우저(localStorage)에만 저장됩니다. 초기화하려면 브라우저 개발자 도구에서 `frl:local:v1` 항목을 지우세요.
+
 ## 실행 모드
 
 `.env.example`을 복사해 `.env.local`을 만들고 값을 바꿉니다.
@@ -36,6 +48,7 @@
 | `npm run report:ttl` | TTL 점검 리포트 생성 → `docs/reports/ttl-analysis.md` |
 | `npm test` | 단위 테스트 (Vitest) |
 | `npm run test:e2e` | 화면 테스트 (Playwright) |
+| `npm run test:rules` | Firestore 보안 규칙 테스트 — **Java 필요**, Firebase 에뮬레이터를 자동으로 띄워 실행 |
 | `npm run build` | 배포용 빌드 |
 
 ## 폴더 구조
@@ -45,7 +58,8 @@ data/ttl/original/   원본 TTL 4개 (수정 금지)
 data/ttl/working/    보완·확장 작업본
 data/compiled/       변환된 JSON
 scripts/             TTL 변환·리포트 스크립트
-src/lib/data/        로그인·저장소 어댑터 (로컬 / Firebase)
+src/lib/data/        로그인·저장소 어댑터 (로컬 / Firebase), 권한 정책(policy.ts)
+firebase/            Firestore 보안 규칙(firestore.rules)·인덱스 — policy.ts와 같은 규칙
 src/lib/ai/          AI 어댑터 (Mock / Gemini)
 src/features/        화면 기능별 코드
 tests/               unit / e2e
