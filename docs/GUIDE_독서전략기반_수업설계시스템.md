@@ -3,7 +3,7 @@
 > **용도**: Google Antigravity 2.0에 이 파일과 TTL 4개를 함께 제공하여 바이브 코딩을 진행하기 위한 마스터 지침서
 > **대상 사용자**: 고등학교 영화 교과 교사 — 이론·감상 3과목(<영화의 이해>, <영화 감상과 비평>, <영화와 삶>)으로 시작, 이후 실습 3과목·타 교과로 확장
 > **원칙**: 오프라인(로컬)에서 먼저 완성·테스트 → GitHub 업로드 → Firebase 연결 배포
-> **개정 이력**: v1(중학교 사회·과학 대상) → **v2(2026-10-17, 고등학교 영화 3과목 대상, 성취기준 포함 TTL 반영)**. v1 원본은 `GUIDE_독서전략기반_수업설계시스템_v1_사회과학.md`로 보관
+> **개정 이력**: v1(중학교 사회·과학 대상) → v2(2026-10-17, 고등학교 영화 3과목 대상, 성취기준 포함 TTL 반영) → **v2.1(2026-10-17, §15 열린 질문 결정 반영)**. v1 원본은 `GUIDE_독서전략기반_수업설계시스템_v1_사회과학.md`로 보관
 
 ---
 
@@ -29,18 +29,19 @@
 
 ```
 [로그인] → [과목 선택] → [교육과정 탐색: 영역/핵심아이디어/내용요소/성취기준(해설 포함)]
-   → [수업 조건 입력: 차시 시간(기본 50분), 학생 수준, 텍스트 유형, (대상 학년 — §15-4 결정 후)]
+   → [수업 조건 입력: 대상 학년(1~3, 참고용), 차시 시간(50분 / 블록 100분), 학생 수준, 텍스트 유형, 다룰 영화]
    → [① 읽기자료 생성·편집·저장]
    → [② 독서전략 추천·선택]   (읽기 기능 ↔ 전략, 텍스트 유형 ↔ 전략)
    → [③ 수업지도안 생성(가네 9사태에 전략 배치)·편집·저장]
-   → [내보내기: 인쇄/PDF, DOCX]
+   → [내보내기: 인쇄/PDF, DOCX, HWPX(한글)]
+   → [공유 보관함에 게시(선택) / 다른 교사 자료 복제]
 ```
 
 ### 1.3 사용자 역할
 | 역할 | 인증 방식 | 주요 권한 |
 |---|---|---|
 | 관리자(admin) | 관리자 ID/비밀번호 | 교사 계정 관리, TTL 업로드·수정·버전 관리, 과목 추가, 전체 통계, 프롬프트 템플릿 관리 |
-| 일반 교사(teacher) | **ID + 비밀번호만** | 교육과정 탐색, 자료·지도안 생성, 본인 결과물 저장·조회·삭제 |
+| 일반 교사(teacher) | **ID + 비밀번호만** (가입 코드로 직접 가입 → 관리자 승인 후 사용) | 교육과정 탐색, 자료·지도안 생성, 본인 결과물 저장·조회·삭제, 공유 보관함 게시·열람·복제 |
 
 ### 1.4 대상 과목 (v2)
 | 과목 | 교육과정 구분 | 영역 | 성취기준 |
@@ -189,9 +190,12 @@ loginId "kimtc01"  →  내부 이메일 "kimtc01@ttl-edu.local"  (사용자에�
 - 비밀번호: Firebase 최소 6자. 앱에서는 **8자 이상** 권장.
 - 이메일이 가짜이므로 **“비밀번호 재설정 메일”은 동작하지 않음** → 재설정은 관리자가 처리(§6.3).
 
-### 6.2 계정 생성 방식 (2안 — 사용자가 선택)
-- **A안(기본)**: 관리자가 교사 계정을 발급(엑셀/CSV 일괄 등록 지원).
-- **B안(선택)**: 학교 공용 **가입 코드(invite code)** 를 아는 교사가 직접 ID/비번 가입 → 관리자가 승인(`active: true`)해야 사용 가능.
+### 6.2 계정 생성 방식 — **B안으로 결정**
+- **B안(채택)**: 공용 **가입 코드(invite code)** 를 아는 교사가 직접 ID/비번 가입 → `active: false` 상태로 생성 → 관리자가 승인(`active: true`)해야 사용 가능.
+  - 가입 코드는 `appConfig/signup.inviteCode`에 저장, 관리자가 변경. 클라이언트는 가입 코드를 읽을 수 없고 **Rules의 `get()`으로만 대조**한다(§6.4).
+  - 승인 대기 계정은 로그인 직후 “관리자 승인 대기 중” 화면만 볼 수 있다.
+  - 관리자는 가입 신청을 승인·거절(거절 = 비활성 유지 + 사유 메모)할 수 있다.
+- A안(관리자 발급)은 보조 기능으로 유지(관리자가 직접 계정을 만들 때).
 
 > 클라이언트에서 다른 사용자 계정을 만들면 현재 로그인이 바뀐다. 관리자 화면의 계정 생성은 **보조 Firebase App 인스턴스(secondary app)** 를 사용해 관리자 세션을 유지할 것.
 
@@ -216,7 +220,13 @@ service cloud.firestore {
     // 사용자 프로필: 본인 읽기 가능, role/active 수정은 관리자만
     match /users/{uid} {
       allow read: if signedIn() && (request.auth.uid == uid || isAdmin());
-      allow create, delete: if isAdmin();
+      // B안: 본인 가입 신청 — 교사·비활성으로만, 가입 코드가 일치할 때만 생성 가능
+      allow create: if isAdmin()
+        || (signedIn() && request.auth.uid == uid
+            && request.resource.data.role == 'teacher'
+            && request.resource.data.active == false
+            && request.resource.data.inviteCode == get(/databases/$(db)/documents/appConfig/signup).data.inviteCode);
+      allow delete: if isAdmin();
       allow update: if isAdmin()
         || (request.auth.uid == uid
             && request.resource.data.role == resource.data.role
@@ -231,9 +241,19 @@ service cloud.firestore {
         ['subjects','curriculumNodes','readingFunctions','readingStrategies','textTypes','gagneEvents','ontologyVersions','verbMappings','promptTemplates','appConfig'];
     }
 
-    // 교사 산출물: 소유자만
-    match /materials/{id}   { allow read, write: if isActive() && (resource == null || resource.data.ownerUid == request.auth.uid) ; allow read: if isAdmin(); }
-    match /lessonPlans/{id} { allow read, write: if isActive() && (resource == null || resource.data.ownerUid == request.auth.uid) ; allow read: if isAdmin(); }
+    // 교사 산출물: 소유자만 쓰기, 공유(visibility == 'shared')된 것은 활성 사용자 모두 읽기
+    match /materials/{id} {
+      allow read: if isActive() && (resource.data.ownerUid == request.auth.uid || resource.data.visibility == 'shared') || isAdmin();
+      allow create: if isActive() && request.resource.data.ownerUid == request.auth.uid;
+      allow update, delete: if isActive() && resource.data.ownerUid == request.auth.uid
+        && (request.method == 'delete' || request.resource.data.ownerUid == resource.data.ownerUid);
+    }
+    match /lessonPlans/{id} {
+      allow read: if isActive() && (resource.data.ownerUid == request.auth.uid || resource.data.visibility == 'shared') || isAdmin();
+      allow create: if isActive() && request.resource.data.ownerUid == request.auth.uid;
+      allow update, delete: if isActive() && resource.data.ownerUid == request.auth.uid
+        && (request.method == 'delete' || request.resource.data.ownerUid == resource.data.ownerUid);
+    }
   }
 }
 ```
@@ -245,7 +265,7 @@ service cloud.firestore {
 
 | 컬렉션 | 주요 필드 | 설명 |
 |---|---|---|
-| `users` | loginId, displayName, role, active, school?, createdAt, lastLoginAt | 사용자 프로필 |
+| `users` | loginId, displayName, role, active, status(`pending`/`approved`/`rejected`), inviteCode(가입 시에만), rejectReason?, createdAt, approvedAt?, approvedBy?, lastLoginAt | 사용자 프로필 (B안 가입·승인) |
 | `ontologyVersions` | versionId, note, createdBy, createdAt, sourceFiles[] | TTL 버전 이력 |
 | `subjects` | id(`filmUnderstanding`,`filmAppreciationCriticism`,`filmAndLife`), name, courseCategory, description, competencies[] | 과목 |
 | `curriculumNodes` | id, subjectId, type(`area`/`coreIdea`/`element`/`standard`), elementKind?(`knowledge`/`process`/`value`), label, description, parentIds[], gradeBand, applicationNotes[]?(area), standardCode?, standardText?, standardExplanations[]?, targetVerb?, targetFunctionIds[], coversElementIds[] | **하나의 컬렉션에 계층 노드 저장**(경로 탐색은 parentIds로) |
@@ -255,9 +275,9 @@ service cloud.firestore {
 | `textTypes` | id, category(자료/조직과탐색/체재/유형), label, description | 텍스트 속성 |
 | `gagneEvents` | seq(1~9), label, purpose, phase(도입/전개/정리), defaultStrategies[], exampleDescription | 가네 9사태 |
 | `promptTemplates` | id, kind(`material`/`strategy`/`lessonPlan`), version, body, outputSchema | 프롬프트 버전 관리 |
-| `materials` | ownerUid, subjectId, nodeIds[], params{분량,수준,텍스트유형,수업시간,영화제목?,학년?(§15-4)}, title, body, glossary[], questions[], ontologyVersion, promptVersion, model, createdAt | 생성된 읽기자료 |
-| `lessonPlans` | ownerUid, materialId, strategyIds[], events[9]{seq, teacherActivity, studentActivity, material, minutes, assessment}, ontologyVersion, createdAt | 수업지도안 |
-| `appConfig` | inviteCode?, aiMode, quotas | 앱 설정 |
+| `materials` | ownerUid, ownerDisplayName, subjectId, nodeIds[], params{학년?, 분량, 수준, 텍스트유형, 수업시간, films[]{title, source(`teacher`/`ai`), confirmed}}, title, body, glossary[], questions[], visibility(`private`/`shared`), sharedAt?, copiedFrom?, ontologyVersion, promptVersion, model, createdAt | 생성된 읽기자료 |
+| `lessonPlans` | ownerUid, ownerDisplayName, materialId, strategyIds[], lessonMinutes(50/100), events[9]{seq, teacherActivity, studentActivity, material, minutes, assessment}, rubric{criteria[]{상, 중, 하}}, visibility, sharedAt?, copiedFrom?, ontologyVersion, createdAt | 수업지도안 |
+| `appConfig` | `signup`{inviteCode}, `ai`{mode, model, dailyQuotaPerTeacher} | 앱 설정 (가입 코드는 클라이언트가 읽지 못함) |
 
 - 인덱스가 필요한 쿼리(`ownerUid + createdAt desc` 등)는 `firestore.indexes.json`에 명시.
 - 교육과정 읽기는 호출 횟수를 줄이기 위해 **과목 단위로 캐시**(앱 시작 시 1회 로드 후 메모리 보관).
@@ -293,7 +313,11 @@ interface AiProvider {
 
 ### 8.3 ① 읽기자료 생성
 
-**입력**: 선택 노드(영역/핵심아이디어/내용요소/성취기준 중 1개 이상), 분량(예: 400/600/800자), 읽기 수준(쉬움/보통/도전), 텍스트 유형(text.ttl의 4기준 조합), 수업 시간(분, 기본 50), 다룰 영화(선택 — 교사가 제목 직접 입력, §15-9), 추가 요청(선택). 대상 학년 입력 여부는 §15-4 결정에 따름(고등학교 선택 과목은 학년이 정해져 있지 않음).
+**입력**: 선택 노드(영역/핵심아이디어/내용요소/성취기준 중 1개 이상), 분량(예: 400/600/800자), 읽기 수준(쉬움/보통/도전), 텍스트 유형(text.ttl의 4기준 조합), 수업 시간(50분 / 블록 100분), 대상 학년(1~3, 선택 — 어휘 수준 참고용), 다룰 영화(선택), 추가 요청(선택).
+- **다룰 영화(§15-9 결정: 두 방식 모두)**
+  - 교사가 제목을 직접 입력하거나, **AI에게 예시 영화 추천**을 요청할 수 있다.
+  - AI가 추천한 영화는 `source: 'ai'`, `confirmed: false`로 표시하고 “제목·감독·연도 등 사실 확인 필요” 경고를 붙인다. **교사가 확인 체크를 해야** 읽기자료 생성에 쓸 수 있다.
+  - AI 추천 시 장르·국가·시대가 고르게 섞이도록 요청하고, 추천 이유는 성취기준과 연결해 한 줄로 쓴다.
 - 프롬프트에는 선택 성취기준의 **원문 + 성취기준 해설 + 해당 영역의 적용 시 고려 사항**을 함께 넣어 범위를 지키게 한다.
 
 **출력(JSON)**: `title`, `body`(문단 배열 또는 비연속 요소 포함 시 `blocks[]`), `glossary[{term, meaning}]`, `comprehensionQuestions[]`(수준별 3~5개), `sourceNote`(“AI 생성 자료, 교사 검토 필요”), `alignment{nodeIds, standardCodes}`.
@@ -320,7 +344,8 @@ interface AiProvider {
 - 템플릿: **가네 9사태** → 도입(1~3) / 전개(4~8) / 정리(9) 3단계 표시
   1. 주의 획득 2. 학습목표 제시 3. 선수학습 재생 4. 학습자료 제시 5. 학습 지침 제공 6. 수행 요구 7. 피드백 제공 8. 수행 평가 9. 파지와 전이
 - 지도안 구성: **기본 정보**(과목·교육과정 구분·영역·성취기준·차시·학습목표) / **영역·차시 개관** / **읽기자료 요약** / **독서전략 개요** / **9사태별 표**(단계, 교수·학습 활동(교사/학생), 시간, 자료·유의점, 평가) / **평가 계획**(평가 준거 3수준 선택) / **활동지 초안**
-- **시간 검증**: 사태별 시간 합계 = 수업 시간(고등학교 기본 50분)이 아니면 경고
+- **시간 검증**: 사태별 시간 합계 = 수업 시간(50분 또는 블록 100분)이 아니면 경고
+- **평가 준거(§15-7 결정: 자동 생성)**: 8사태 ‘수행 평가’에 성취기준 기반 평가 요소별 상·중·하 준거를 AI가 초안으로 생성, 교사가 수정
 - ‘자료·유의점’ 칸에는 해당 영역의 **성취기준 적용 시 고려 사항**을 참고 정보로 제시(원문 그대로, 교사가 선택해 반영)
 - 학습목표는 성취기준 동사를 반영하여 “~할 수 있다” 형식으로 생성
 - 모든 칸은 **인라인 편집 가능**, 재생성 시 수정한 칸 보호(잠금 기능)
@@ -333,14 +358,16 @@ interface AiProvider {
 - 로그인(ID/비번), 로그아웃, 내 정보(비밀번호 변경 — 본인은 가능)
 
 ### 9.2 교사 모드
+0. **가입 신청**: 가입 코드 + 아이디 + 표시 이름 + 비밀번호 → “관리자 승인 대기” 안내
 1. **홈**: 최근 작업, 새 수업 만들기
 2. **교육과정 탐색**: 과목 탭(3과목) → 트리/카드(영역 → 핵심아이디어·내용요소·성취기준), 성취기준 클릭 시 해설·적용 시 고려 사항 펼침, 검색(키워드·성취기준 코드), 필터(과목 구분·내용 요소 범주), 다중 선택
 3. **수업 마법사(Wizard)**: 단계별 진행 막대 — 조건 입력 → 읽기자료 → 독서전략 → 지도안 → 내보내기. 이전 단계 수정 시 후속 결과에 “다시 생성 필요” 표시
-4. **내 보관함**: 자료/지도안 목록, 검색, 복제, 삭제
+4. **내 보관함**: 자료/지도안 목록, 검색, 복제, 삭제, **공유하기/공유 취소**
+4-1. **공유 보관함**: 다른 교사가 공유한 자료·지도안 열람(과목·영역·성취기준 필터), **내 보관함으로 복제**(원본은 수정 불가, `copiedFrom` 기록)
 5. **도움말**: 사용법, 각 독서전략 설명, 가네 9사태 설명
 
 ### 9.3 관리자 모드
-1. **계정 관리**: 목록, 발급(단건/CSV), 비활성화, (CLI 안내) 비밀번호 재설정
+1. **계정 관리**: **가입 신청 승인·거절**, 목록, 직접 발급(단건/CSV), 비활성화, 가입 코드 변경, (CLI 안내) 비밀번호 재설정
 2. **온톨로지 관리**: TTL 업로드 → 검증 리포트 → diff 미리보기 → 새 버전 게시 / 이전 버전 롤백 / TTL 내보내기
 3. **교육과정 편집기**: 성취기준별 독서 기능 연결(`targetFunction`) 지정 — 미지정 22개 목록 우선 표시, 성취기준 ↔ 내용 요소 연결(`coversElement`), **동사 매핑 사전** 편집. 원문 필드(코드·원문·해설·고려 사항)는 읽기 전용
 4. **독서전략 편집기**: 절차·적합 텍스트 유형·권장 사태 편집, 검수 상태 변경
@@ -436,8 +463,8 @@ interface AiProvider {
 - ✅ 완료 기준: 리포트 Artifact 제출, 컴파일 JSON 생성(성취기준 32개·해설·고려 사항 포함 확인), 단위 테스트 통과, **사용자 검토 후 스키마(§5) 확정**
 
 ### Phase 2 — 인증·권한
-- ID→가상 이메일 로그인, 관리자/교사 분기, 비활성 계정 차단, Rules + Rules 테스트, 시드 스크립트
-- ✅ 완료 기준: Rules 테스트 통과, 교사로 관리자 화면 접근 불가
+- ID→가상 이메일 로그인, **가입 코드 가입 신청·관리자 승인(B안)**, 관리자/교사 분기, 승인 대기·비활성 계정 차단, Rules + Rules 테스트, 시드 스크립트
+- ✅ 완료 기준: Rules 테스트 통과, 교사로 관리자 화면 접근 불가, 가입 신청 → 승인 → 로그인 흐름 동작
 
 ### Phase 3 — 교육과정 탐색(교사)
 - 영화 3과목 트리/검색/다중선택, 성취기준 해설·적용 시 고려 사항 표시, 독서 기능 미지정 성취기준에 “독서 기능 미지정” 표시
@@ -452,12 +479,14 @@ interface AiProvider {
 - ✅ 완료 기준: 단위 테스트(동사→기능→전략, §5.2 4단계 순서), `targetFunction`이 비어 있는 성취기준(예: ‘탐구하다’)에서도 교사가 기능을 직접 선택해 진행 가능
 
 ### Phase 6 — 수업지도안(가네 9사태)
-- 9사태 템플릿 로드, 전략 배치, 시간 검증, 인라인 편집·잠금, 저장
-- ✅ 완료 기준: 50분 기준 지도안 1건 생성→편집→저장→재열람
+- 9사태 템플릿 로드, 전략 배치, 시간 검증(50/100분), 평가 준거 자동 생성, 인라인 편집·잠금, 저장
+- 공유 보관함: 자료·지도안 공유/공유 취소, 열람, 복제
+- ✅ 완료 기준: 50분·100분 기준 지도안 각 1건 생성→편집→저장→재열람, 공유한 지도안을 다른 교사 계정에서 열람·복제
 
 ### Phase 7 — 내보내기
-- 인쇄 CSS(A4) PDF, DOCX 내보내기, 활동지 포함
-- ✅ 완료 기준: 한글 폰트 깨짐 없음(DOCX에서 열기 확인), 표 레이아웃 유지
+- 인쇄 CSS(A4) PDF, DOCX 내보내기, **HWPX(한글) 내보내기**, 활동지 포함
+  - HWPX는 한글 2014 이후 버전이 여는 공개 XML 형식(OWPML). 클라이언트에서 템플릿 기반으로 생성. 구형 바이너리 .hwp는 만들지 않음
+- ✅ 완료 기준: 한글 폰트 깨짐 없음(DOCX·HWPX를 각각 워드·한글에서 열어 확인), 표 레이아웃 유지
 
 ### Phase 8 — 관리자 기능
 - 계정 관리, TTL 업로드·diff·버전·롤백·내보내기, 교육과정/전략 편집기(독서 기능 연결·동사 매핑 사전 포함), 프롬프트 관리
@@ -514,17 +543,21 @@ interface AiProvider {
 - 성취기준: `영화과.ttl`에 원문 수록 완료(해설·적용 시 고려 사항 포함)
 - 동사 ↔ 독서 기능 연결: 관리자 화면에서 지정(§5.2), 에이전트가 임의로 채우지 않음
 
-**확인할 질문**
-1. **(해결됨)** 성취기준 데이터 — `영화과.ttl`로 제공
-2. **AI 연결 방식**: §8.1의 ①~④ 중 선택, 예상 이용 교사 수와 월 생성 횟수
-3. **계정 방식**: §6.2 A안(관리자 발급) vs B안(가입 코드 + 승인)
-4. **대상 학년 입력**: 고등학교 선택 과목은 학년이 정해져 있지 않음(TTL `gradeBand`는 모두 “고등학교”). 수업 조건에 학년(1~3)을 참고용으로 받을 것인가, 받지 않을 것인가?
-5. **내보내기 형식**: PDF·DOCX 외에 한글(HWP/HWPX)이 필요한가? (직접 생성은 난이도가 높아 DOCX 변환 후 한글에서 열기를 기본 안내로 제안)
-6. **수업 시간 기본값**: 50분 고정 / 블록수업(100분) 지원 여부
-7. **가네 사태 8·9번의 평가 계획**: 평가 준거(상·중·하) 자동 생성 여부
-8. **저장 공유**: 교사 간 지도안 공유 기능(공개 보관함)이 필요한가? (초기 버전에서는 미포함 권장)
-9. **실존 영화 다루기**: 읽기자료에서 실존 영화를 다루려면 교사가 제목을 입력하게 할 것인가? AI가 예시 영화를 제안하게 할 것인가? (AI 제안은 사실 오류 위험이 큼 — §8.3·§14 참고)
-10. **영상 텍스트 유형**: `text.ttl`에 영상(동영상·영화 장면 등) 텍스트 유형을 추가할 것인가, 초기 버전은 글 자료만 다룰 것인가? (§3.3-7)
+**§15 질문 결정 (2026-10-17, 사용자 답변)**
+
+| # | 질문 | 결정 | 반영 위치 |
+|---|---|---|---|
+| 1 | 성취기준 데이터 | `영화과.ttl`로 제공 (해결) | §3, §5 |
+| 2 | AI 연결 방식 | **① Firebase AI Logic(Gemini) + App Check**. 예상 교사 수·월 생성 횟수는 Phase 9에서 확인 | §8.1 |
+| 3 | 계정 방식 | **B안: 가입 코드 + 관리자 승인** | §6.2, §6.4, §7, §9 |
+| 4 | 대상 학년 입력 | **받음** (1~3, 선택 입력, 어휘 수준 참고용) | §1.2, §8.3 |
+| 5 | 한글 출력 | **필요 → HWPX 생성** | §12 Phase 7 |
+| 6 | 수업 시간 | **50분과 블록 100분 모두 지원** | §8.5 |
+| 7 | 평가 준거 자동 생성 | **생성**(상·중·하, 교사 수정) | §8.5 |
+| 8 | 교사 간 공유 | **이번 버전에 포함** (공유 보관함) | §6.4, §7, §9, §12 Phase 6 |
+| 9 | 실존 영화 | **교사 입력 + AI 추천 둘 다**. AI 추천은 사실 확인 체크 필수 | §8.3 |
+| 10 | 영상 텍스트 유형 | **초기 버전은 글 자료만** | §3.3-7 |
+| 추가 | readstrategy.ttl `적용하다` 정의 누락 | **작업본(`data/ttl/working/readstrategy.ttl`)에 정의 한 줄 추가**, 원본은 그대로 | §3.3 |
 
 ---
 
@@ -582,5 +615,5 @@ interface AiProvider {
 - **진로 선택 / 융합 선택 과목**: 2022 개정 고등학교 선택 과목 구분. <영화의 이해>·<영화 감상과 비평>은 진로 선택, <영화와 삶>은 융합 선택
 
 ### 17.4 우선순위 요약(MVP 범위)
-- **반드시(MVP)**: 로그인 2종, 영화 3과목 탐색(성취기준·해설 포함), 읽기자료(Mock→실제), 전략 추천, 가네 지도안, 저장·내보내기, 관리자 계정 관리, TTL 업로드, 독서 기능 연결·동사 매핑 편집기
-- **다음 버전**: 영화 실습 3과목, 영상 텍스트 유형, 교사 간 공유, 통계 대시보드, 이미지/차트 자동 생성, HWPX 직접 출력, 과목 추가 자동 매핑 고도화
+- **반드시(MVP)**: 로그인 2종 + 가입 신청·승인, 영화 3과목 탐색(성취기준·해설 포함), 읽기자료(Mock→실제, 실존 영화 교사 입력·AI 추천), 전략 추천, 가네 지도안(50/100분, 평가 준거), 저장·내보내기(PDF·DOCX·HWPX), **공유 보관함**, 관리자 계정 관리, TTL 업로드, 독서 기능 연결·동사 매핑 편집기
+- **다음 버전**: 영화 실습 3과목, 영상 텍스트 유형, 통계 대시보드, 이미지/차트 자동 생성, 과목 추가 자동 매핑 고도화

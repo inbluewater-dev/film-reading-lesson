@@ -1,0 +1,62 @@
+rules_version = '2';
+// 권한 규칙 — src/lib/data/policy.ts 와 같은 규칙. 한쪽을 바꾸면 다른 쪽도 같이 바꾸고 테스트할 것.
+service cloud.firestore {
+  match /databases/{db}/documents {
+    function signedIn() { return request.auth != null; }
+    function me() { return get(/databases/$(db)/documents/users/$(request.auth.uid)).data; }
+    function hasProfile() { return signedIn() && exists(/databases/$(db)/documents/users/$(request.auth.uid)); }
+    function isActive() { return hasProfile() && me().active == true; }
+    function isAdmin()  { return isActive() && me().role == 'admin'; }
+    function readable() {
+      return ['subjects','curriculumNodes','readingFunctions','readingStrategies','textTypes','gagneEvents','ontologyVersions','verbMappings'];
+    }
+    function adminWritable() { return readable().concat(['promptTemplates','appConfig']); }
+
+    // ---------------- 사용자 프로필 (가이드 §6.2 B안: 가입 코드 + 관리자 승인)
+    match /users/{uid} {
+      allow read: if signedIn() && (request.auth.uid == uid || isAdmin());
+      allow create: if isAdmin()
+        || (signedIn() && request.auth.uid == uid
+            && request.resource.data.role == 'teacher'
+            && request.resource.data.active == false
+            && request.resource.data.status == 'pending'
+            && request.resource.data.inviteCode == get(/databases/$(db)/documents/appConfig/signup).data.inviteCode);
+      allow update: if isAdmin()
+        || (signedIn() && request.auth.uid == uid
+            && request.resource.data.role == resource.data.role
+            && request.resource.data.active == resource.data.active
+            && request.resource.data.status == resource.data.status
+            && request.resource.data.loginId == resource.data.loginId);
+      allow delete: if isAdmin();
+    }
+
+    // ---------------- 교육과정·전략 등 공통 데이터: 활성 사용자 읽기, 관리자 쓰기
+    match /{coll}/{docId=**} {
+      allow read: if (isActive() && coll in readable()) || (isAdmin() && coll in adminWritable());
+      allow write: if isAdmin() && coll in adminWritable();
+    }
+
+    // ---------------- 교사 산출물: 소유자만 쓰기, 공유된 것은 활성 사용자 모두 읽기
+    function canReadOwned() {
+      return isAdmin() || (isActive() && (resource.data.ownerUid == request.auth.uid || resource.data.visibility == 'shared'));
+    }
+    function canCreateOwned() { return isActive() && request.resource.data.ownerUid == request.auth.uid; }
+    function canUpdateOwned() {
+      return isActive() && resource.data.ownerUid == request.auth.uid && request.resource.data.ownerUid == resource.data.ownerUid;
+    }
+    function canDeleteOwned() { return isActive() && resource.data.ownerUid == request.auth.uid; }
+
+    match /materials/{id} {
+      allow read: if canReadOwned();
+      allow create: if canCreateOwned();
+      allow update: if canUpdateOwned();
+      allow delete: if canDeleteOwned();
+    }
+    match /lessonPlans/{id} {
+      allow read: if canReadOwned();
+      allow create: if canCreateOwned();
+      allow update: if canUpdateOwned();
+      allow delete: if canDeleteOwned();
+    }
+  }
+}

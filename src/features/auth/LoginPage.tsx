@@ -1,77 +1,51 @@
-import { FormEvent, useState } from 'react';
-import { config } from '../../lib/config';
+import { useState, type FormEvent } from 'react';
+import { Link, Navigate, useNavigate } from 'react-router-dom';
+import { homePathFor, useAuth, useServices } from '../../app/AuthContext';
+import { Alert, Button, Field, errorMessage } from '../../components/ui';
 import { LOGIN_ID_PATTERN } from '../../lib/data/types';
+import AuthShell from './AuthShell';
 
 export default function LoginPage() {
+  const { user } = useAuth();
+  const services = useServices();
+  const navigate = useNavigate();
   const [loginId, setLoginId] = useState('');
   const [password, setPassword] = useState('');
   const [error, setError] = useState<string | null>(null);
+  const [busy, setBusy] = useState(false);
 
-  function handleSubmit(e: FormEvent) {
+  if (user) return <Navigate to={homePathFor(user)} replace />;
+
+  async function handleSubmit(e: FormEvent) {
     e.preventDefault();
-    if (!LOGIN_ID_PATTERN.test(loginId)) {
-      setError('아이디는 영어 소문자와 숫자 4~20자입니다.');
-      return;
+    setError(null);
+    if (!LOGIN_ID_PATTERN.test(loginId)) return setError('아이디는 영어 소문자와 숫자 4~20자입니다.');
+    if (!password) return setError('비밀번호를 입력하세요.');
+    setBusy(true);
+    try {
+      const u = await services.auth.signIn(loginId, password);
+      navigate(homePathFor(u), { replace: true });
+    } catch (err) {
+      setError(errorMessage(err));
+    } finally {
+      setBusy(false);
     }
-    if (password.length < 6) {
-      setError('비밀번호는 6자 이상입니다.');
-      return;
-    }
-    // 실제 로그인 처리는 Phase 2에서 AuthService로 연결
-    setError('로그인 기능은 아직 준비 중입니다. (Phase 2)');
   }
 
   return (
-    <main className="min-h-screen flex items-center justify-center px-4">
-      <div className="w-full max-w-sm">
-        <p className="text-sm font-medium text-amber-700 tracking-wide">고등학교 영화 교과</p>
-        <h1 className="mt-1 text-2xl font-bold">영화 수업 설계 도우미</h1>
-        <p className="mt-2 text-sm text-stone-600">
-          교육과정에서 출발해 읽기자료, 독서전략, 수업지도안을 만듭니다.
-        </p>
-
-        <form onSubmit={handleSubmit} className="mt-8 space-y-4" noValidate>
-          <label className="block">
-            <span className="text-sm font-medium">아이디</span>
-            <input
-              name="loginId"
-              autoComplete="username"
-              value={loginId}
-              onChange={(e) => setLoginId(e.target.value.trim())}
-              className="mt-1 w-full rounded-md border border-stone-300 bg-white px-3 py-2 focus:outline-none focus:ring-2 focus:ring-amber-600"
-            />
-          </label>
-          <label className="block">
-            <span className="text-sm font-medium">비밀번호</span>
-            <input
-              name="password"
-              type="password"
-              autoComplete="current-password"
-              value={password}
-              onChange={(e) => setPassword(e.target.value)}
-              className="mt-1 w-full rounded-md border border-stone-300 bg-white px-3 py-2 focus:outline-none focus:ring-2 focus:ring-amber-600"
-            />
-          </label>
-          {error && (
-            <p role="alert" className="text-sm text-red-700">
-              {error}
-            </p>
-          )}
-          <button
-            type="submit"
-            className="w-full rounded-md bg-stone-900 py-2.5 text-white font-medium hover:bg-stone-700 focus:outline-none focus:ring-2 focus:ring-amber-600 focus:ring-offset-2"
-          >
-            로그인
-          </button>
-        </form>
-
-        <p className="mt-6 text-xs text-stone-500">
-          비밀번호를 잊었으면 관리자에게 문의하세요.
-        </p>
-        {config.dataMode === 'local' && (
-          <p className="mt-2 text-xs text-stone-400">로컬 모드 · AI {config.aiMode === 'mock' ? '샘플(Mock)' : 'Gemini'}</p>
-        )}
-      </div>
-    </main>
+    <AuthShell title="영화 수업 설계 도우미" lead="교육과정에서 출발해 읽기자료, 독서전략, 수업지도안을 만듭니다.">
+      <form onSubmit={handleSubmit} className="space-y-4" noValidate>
+        <Field label="아이디" name="loginId" autoComplete="username" value={loginId} onChange={(e) => setLoginId(e.target.value.trim())} />
+        <Field label="비밀번호" name="password" type="password" autoComplete="current-password" value={password} onChange={(e) => setPassword(e.target.value)} />
+        {error && <Alert>{error}</Alert>}
+        <Button type="submit" className="w-full py-2.5" disabled={busy}>
+          {busy ? '확인 중…' : '로그인'}
+        </Button>
+      </form>
+      <p className="mt-6 text-sm text-stone-600">
+        처음 사용하시나요? <Link to="/signup" className="font-medium text-amber-800 underline">가입 신청</Link>
+      </p>
+      <p className="mt-2 text-xs text-stone-500">비밀번호를 잊었으면 관리자에게 문의하세요.</p>
+    </AuthShell>
   );
 }

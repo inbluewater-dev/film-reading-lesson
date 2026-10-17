@@ -73,6 +73,13 @@ describe('readstrategy.ttl → 독서 기능·동사·전략', () => {
     expect(v).toMatchObject({ label: '적용하다', labelSource: 'iri', functionIds: ['rs:Func_Application'] });
     expect(reading.verbs.filter((x) => x.labelSource === 'iri')).toHaveLength(1);
   });
+  it('작업본(data/ttl/working)에서는 적용하다가 정의되어 있고, 원본과의 차이는 그 한 줄뿐이다', () => {
+    const working = compileReading(Graph.fromTurtle(readFileSync(join(__dirname, '../../data/ttl/working/readstrategy.ttl'), 'utf-8')));
+    expect(working.verbs.find((x) => x.id === 'rs:Verb_적용하다')).toMatchObject({ label: '적용하다', labelSource: 'ttl' });
+    expect(working.verbs.filter((x) => x.labelSource === 'iri')).toHaveLength(0);
+    const norm = (r: typeof reading) => ({ ...r, verbs: r.verbs.map((v) => ({ ...v, labelSource: 'ttl' })).sort((x, y) => x.id.localeCompare(y.id)) });
+    expect(norm(working)).toEqual(norm(reading));
+  });
   it('여러 기능에 속한 동사: 예상하다(탐색·예측), 연결하다(비교·관계화)', () => {
     expect(reading.verbs.find((v) => v.label === '예상하다')!.functionIds).toEqual(['rs:Func_Exploration', 'rs:Func_Prediction']);
     expect(reading.verbs.find((v) => v.label === '연결하다')!.functionIds).toEqual(['rs:Func_Comparison', 'rs:Func_Relation']);
