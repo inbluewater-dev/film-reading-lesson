@@ -5,6 +5,7 @@
   "type": "module",
   "description": "고등학교 영화 교과 읽기자료·독서전략·수업지도안 생성 시스템",
   "scripts": {
+    "predev": "npm run compile:data",
     "dev": "vite",
     "build": "npm run compile:data && tsc --noEmit && vite build",
     "preview": "vite preview",
