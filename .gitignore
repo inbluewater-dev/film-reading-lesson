@@ -9,3 +9,4 @@ playwright-report/
 *serviceAccount*.json
 tools/*.key.json
 data/compiled/
+dist-demo/

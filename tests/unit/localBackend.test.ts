@@ -116,3 +116,14 @@ describe('권한', () => {
     expect(await code(b.auth.signIn('teacher01', 'newpass99'))).toBe('ok');
   });
 });
+
+describe('SHA-256 대체 구현 (crypto.subtle이 없는 환경용)', () => {
+  it('표준 구현과 같은 값을 낸다', async () => {
+    const { sha256Fallback } = await import('../../src/lib/data/local/localBackend');
+    for (const s of ['', 'abc', '비밀번호123', 'x'.repeat(200)]) {
+      const buf = await crypto.subtle.digest('SHA-256', new TextEncoder().encode(s));
+      const std = [...new Uint8Array(buf)].map((b) => b.toString(16).padStart(2, '0')).join('');
+      expect(sha256Fallback(s)).toBe(std);
+    }
+  });
+});

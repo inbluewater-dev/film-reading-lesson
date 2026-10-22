@@ -1,4 +1,5 @@
-import { HashRouter, Navigate, Route, Routes } from 'react-router-dom';
+import { HashRouter, MemoryRouter, Navigate, Route, Routes } from 'react-router-dom';
+import { config } from '../lib/config';
 import AccountPage from '../features/account/AccountPage';
 import AdminHome from '../features/admin/AdminHome';
 import LoginPage from '../features/auth/LoginPage';
@@ -27,13 +28,15 @@ function Routed() {
   );
 }
 
-// GitHub Pages는 새로고침 시 404가 나므로 HashRouter(/#/경로)를 사용한다 (가이드 §2)
+// GitHub Pages는 새로고침 시 404가 나므로 HashRouter(/#/경로)를 사용한다 (가이드 §2).
+// 체험판(웹 페이지 한 장으로 공유)은 주소를 쓰지 않는 MemoryRouter를 쓴다.
 export default function App() {
+  const Router = config.memoryRouter ? MemoryRouter : HashRouter;
   return (
     <AuthProvider>
-      <HashRouter>
+      <Router>
         <Routed />
-      </HashRouter>
+      </Router>
     </AuthProvider>
   );
 }
