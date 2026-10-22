@@ -25,6 +25,26 @@ export interface GeminiDeps {
   model: () => Promise<string>;
   /** 관리자가 고친 프롬프트 템플릿 (없으면 기본값) */
   template: (kind: PromptKind) => Promise<string>;
+  /** 기다리기 (테스트에서 바꿔 끼움) */
+  sleep?: (ms: number) => Promise<void>;
+}
+
+/**
+ * 고른 모델이 붐비거나 한도가 찼을 때 차례로 써 볼 모델 (2026-10 무료 등급 안정 모델).
+ * 무료 등급 한도는 프로젝트·모델별로 따로 센다(측정값: Flash 분당 5·하루 20회, Flash-Lite 분당 15·하루 500회).
+ */
+export const FALLBACK_MODELS = ['gemini-3.6-flash', 'gemini-3.5-flash-lite', 'gemini-3.1-flash-lite'];
+
+/** 이 모델의 사용 한도가 찬 경우 — 다른 모델은 한도가 따로라 넘어가 본다 */
+export function isQuota(e: unknown): boolean {
+  const msg = String((e as { message?: string })?.message ?? e);
+  return /\b429\b|RESOURCE_EXHAUSTED|exceeded your current quota|rate.?limit/i.test(msg);
+}
+
+/** 잠시 뒤 다시 하면 될 수 있는 오류 (서버 과부하·일시 장애) */
+export function isTransient(e: unknown): boolean {
+  const msg = String((e as { message?: string })?.message ?? e);
+  return /\b(500|502|503|504)\b|UNAVAILABLE|overloaded|high demand|INTERNAL|DEADLINE_EXCEEDED/i.test(msg);
 }
 
 export const DEFAULT_MODEL = 'gemini-3.8-flash';
@@ -53,9 +73,10 @@ export function aiError(e: unknown): AppError {
   console.error('[AI 오류]', e);
   const detail = ` (오류 내용: ${msg.replace(/\s+/g, ' ').slice(0, 220)})`;
   const err = (text: string) => new AppError('unavailable', text + detail);
-  if (/\b429\b|RESOURCE_EXHAUSTED|quota exceeded|exceeded your current quota|rate.?limit/i.test(msg)) return err('AI 무료 사용량이 잠시 다 찼습니다. 1~2분 뒤 다시 시도하세요. 계속되면 관리자에게 알려 주세요.');
+  if (/\b429\b|RESOURCE_EXHAUSTED|quota exceeded|exceeded your current quota|rate.?limit/i.test(msg)) return err('AI 무료 사용량이 다 찼습니다. 1분쯤 뒤 다시 시도하세요. 계속되면 오늘 한도(매일 오후 4~5시에 초기화)가 찬 것이니 관리자에게 알려 주세요.');
   if (/\b404\b|NOT_FOUND|not found for API version|is not supported for generateContent/i.test(msg)) return err('AI 모델을 찾을 수 없습니다. 관리자 › 사용 현황에서 다른 모델을 골라 보세요.');
   if (/app.?check|\b403\b|PERMISSION_DENIED|API key|api-not-enabled|has not been used|is disabled|SERVICE_DISABLED/i.test(msg)) return err('AI 서비스 연결이 허용되지 않았습니다. Firebase 콘솔에서 AI Logic(Gemini Developer API)이 켜져 있는지, App Check 설정을 확인하세요.');
+  if (isTransient(e)) return err('AI 서버가 지금 붐빕니다. 잠시 뒤 다시 시도하세요. 계속되면 관리자 › 사용 현황에서 다른 모델을 골라 보세요.');
   if (/SAFETY|blocked/i.test(msg)) return err('AI가 안전 기준 때문에 답하지 않았습니다. 추가 요청이나 영화를 바꿔 다시 시도하세요.');
   if (/network|failed to fetch|offline/i.test(msg)) return err('인터넷 연결을 확인한 뒤 다시 시도하세요.');
   return err('AI가 응답하지 못했습니다. 잠시 뒤 다시 시도하세요.');
@@ -67,6 +88,29 @@ export class GeminiCore implements AiProvider {
 
   constructor(private deps: GeminiDeps) {}
 
+  /** 붐빔·일시 장애면 같은 모델로 한 번 더, 한도 초과·계속 붐빔이면 다음 모델로 (모델을 바꿔 성공하면 this.model에 기록) */
+  private async callWithFallback(prompt: string, jsonSchema: Record<string, unknown>): Promise<string> {
+    const sleep = this.deps.sleep ?? ((ms: number) => new Promise<void>((r) => setTimeout(r, ms)));
+    const chosen = this.model;
+    const models = [chosen, ...FALLBACK_MODELS.filter((m) => m !== chosen)];
+    let last: unknown;
+    for (const model of models) {
+      for (let tryNo = 0; tryNo < 2; tryNo++) {
+        try {
+          const text = await this.deps.generate({ model, prompt, jsonSchema });
+          this.model = model;
+          return text;
+        } catch (e) {
+          last = e;
+          if (isQuota(e)) break; // 한도가 찬 모델은 다시 부르지 않고 다음 모델로
+          if (!isTransient(e)) throw aiError(e);
+          if (tryNo === 0) await sleep(1500);
+        }
+      }
+    }
+    throw aiError(last);
+  }
+
   /** 생성 → 파싱·검증, 형식이 틀리면 한 번 더 (가이드 §8.2) */
   private async run<T>(kind: PromptKind, vars: Record<string, string | number | null | undefined>, schema: ZodType<T>): Promise<T> {
     this.model = await this.deps.model();
@@ -74,12 +118,7 @@ export class GeminiCore implements AiProvider {
     const prompt = renderPrompt(body, vars);
     let lastIssue = '';
     for (let attempt = 0; attempt < 2; attempt++) {
-      let text: string;
-      try {
-        text = await this.deps.generate({ model: this.model, prompt: attempt === 0 ? prompt : `${prompt}\n\n[주의] 이전 응답이 JSON 스키마에 맞지 않았습니다(${lastIssue}). 스키마에 맞는 JSON만 출력하세요.`, jsonSchema: SCHEMAS[kind] });
-      } catch (e) {
-        throw aiError(e);
-      }
+      const text = await this.callWithFallback(attempt === 0 ? prompt : `${prompt}\n\n[주의] 이전 응답이 JSON 스키마에 맞지 않았습니다(${lastIssue}). 스키마에 맞는 JSON만 출력하세요.`, SCHEMAS[kind]);
       try {
         const parsed = schema.safeParse(JSON.parse(stripFence(text)));
         if (parsed.success) return parsed.data;
