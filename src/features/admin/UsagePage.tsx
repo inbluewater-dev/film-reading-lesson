@@ -7,7 +7,7 @@ import { config } from '../../lib/config';
 import { USAGE_LABEL, type UsageKind, type UsageRecord, type UserProfile } from '../../lib/data/types';
 
 // 2026-10 기준 Gemini 무료 등급에서 쓸 수 있는 안정 모델 (ai.google.dev/gemini-api/docs/models). 바뀌면 여기와 DEFAULT_MODEL을 고친다
-const MODELS = ['gemini-3.8-flash', 'gemini-3.6-flash', 'gemini-3.5-flash-lite', 'gemini-3.1-flash-lite'];
+const MODELS = ['gemini-3.5-flash-lite', 'gemini-3.1-flash-lite', 'gemini-3.6-flash', 'gemini-3.8-flash'];
 
 const KINDS = Object.keys(USAGE_LABEL) as UsageKind[];
 const kstToday = () => new Date(Date.now() + 9 * 3600_000).toISOString().slice(0, 10);

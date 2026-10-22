@@ -47,7 +47,7 @@ npx firebase-tools deploy --only firestore:rules,firestore:indexes
 ## 6. AI 켜기 (Firebase AI Logic)
 1. **빌드(또는 AI) → AI Logic → 시작하기 → Gemini Developer API** 를 고릅니다(무료 등급, 카드 불필요).
 2. Firebase가 Gemini용 키를 알아서 만들고 관리합니다. **키를 복사해 앱이나 `.env.local`에 넣지 않습니다.**
-3. 기본 모델은 `gemini-3.8-flash`입니다. 관리자 화면 › 사용 현황에서 바꿀 수 있습니다.
+3. 기본 모델은 `gemini-3.5-flash-lite`입니다(무료 한도 하루 약 500회, 학교 전체 공유). 품질을 높이려면 관리자 › 사용 현황에서 Flash로 바꿀 수 있지만 무료 한도가 하루 약 20회라 유료(Blaze) 전환을 함께 검토합니다.
 
 ## 7. App Check (필수 — 2026-11-02부터 AI Logic에 필수)
 다른 사이트가 우리 프로젝트의 AI를 몰래 쓰지 못하게 막습니다. Firebase 콘솔에 "2026년 11월 2일부터 Firebase AI Logic을 사용하려면 앱 체크 시행이 필수"라고 안내되어 있습니다.
