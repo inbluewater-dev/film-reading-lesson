@@ -107,6 +107,16 @@ describe('프롬프트 템플릿', () => {
 });
 
 describe('AI 사용 기록·하루 한도', () => {
+  it('설정이 없으면 하루 20회, 비우면 제한 없음, 모델 이름 검사', async () => {
+    await b.auth.signIn('teacher01', 'teacher1234');
+    expect(await b.usage.today()).toEqual({ total: 0, quota: 20 });
+    await b.auth.signIn('admin01', 'admin1234');
+    expect(await b.admin.getAiSettings()).toEqual({ dailyQuotaPerTeacher: 20, model: null });
+    await b.admin.setAiSettings({ dailyQuotaPerTeacher: null, model: 'gemini-3.5-flash-lite' });
+    expect(await b.admin.getAiSettings()).toEqual({ dailyQuotaPerTeacher: null, model: 'gemini-3.5-flash-lite' });
+    expect((await b.usage.today()).quota).toBeNull();
+    expect(await err(b.admin.setAiSettings({ dailyQuotaPerTeacher: 5, model: 'gpt-4' }))).toBe('invalid-input');
+  });
   it('한도를 넘으면 막고, 관리자는 교사별 기록을 본다', async () => {
     await b.auth.signIn('admin01', 'admin1234');
     await b.admin.setAiSettings({ dailyQuotaPerTeacher: 2 });

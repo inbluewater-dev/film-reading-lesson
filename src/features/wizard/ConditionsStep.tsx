@@ -187,8 +187,12 @@ export default function ConditionsStep({ onGenerate }: { onGenerate: () => void 
           value={p.extra}
           onChange={(e) => setParams({ extra: e.target.value })}
           placeholder="예: 모둠 토의로 이어질 수 있게 질문을 넣어 주세요"
+          aria-describedby="extra-hint"
           className="w-full rounded-md border border-stone-300 bg-white px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-amber-600"
         />
+        <p id="extra-hint" className="text-xs text-stone-500">
+          학생 이름 등 개인정보는 쓰지 마세요. 입력 내용은 AI 서비스(Google Gemini 무료 등급)로 보내지며 Google 제품 개선에 쓰일 수 있습니다.
+        </p>
       </section>
 
       <div className="flex flex-wrap items-center gap-3">

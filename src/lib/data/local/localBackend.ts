@@ -4,6 +4,7 @@
 import * as policy from '../policy';
 import {
   AppError,
+  DEFAULT_DAILY_QUOTA,
   INVITE_CODE_PATTERN,
   LOGIN_ID_PATTERN,
   MIN_PASSWORD_LENGTH,
@@ -19,6 +20,7 @@ import {
   type UsageRecord,
   type UsageService,
   type UserProfile,
+  validateAiSettings,
   validateSignUp,
 } from '../types';
 import type { LessonPlanRecord, LibraryService, MaterialRecord } from '../../library/types';
@@ -344,15 +346,14 @@ export class LocalBackend implements Services {
   private async getAiSettings(): Promise<AiSettings> {
     await this.ready;
     if (!policy.canReadAiSettings(this.actor())) throw new AppError('permission-denied', '승인된 계정만 볼 수 있습니다.');
-    return this.state.appConfig.ai ?? { dailyQuotaPerTeacher: null };
+    return { dailyQuotaPerTeacher: DEFAULT_DAILY_QUOTA, model: null, ...this.state.appConfig.ai };
   }
 
   private async setAiSettings(v: AiSettings): Promise<void> {
     await this.ready;
     if (!policy.canWriteShared(this.actor(), 'appConfig')) throw new AppError('permission-denied', '관리자만 바꿀 수 있습니다.');
-    const q = v.dailyQuotaPerTeacher;
-    if (q !== null && (!Number.isInteger(q) || q < 1 || q > 1000)) throw new AppError('invalid-input', '하루 한도는 1~1000 사이 정수로 정하거나 비워 두세요.');
-    this.state.appConfig.ai = { dailyQuotaPerTeacher: q };
+    validateAiSettings(v);
+    this.state.appConfig.ai = { ...this.state.appConfig.ai, dailyQuotaPerTeacher: v.dailyQuotaPerTeacher, ...(v.model !== undefined ? { model: v.model || null } : {}) };
     this.save();
   }
 
@@ -367,7 +368,8 @@ export class LocalBackend implements Services {
     const a = this.actor();
     if (!a || !policy.canReadUsage(a, a.uid)) throw new AppError('permission-denied', '로그인이 필요합니다.');
     const rec = this.state.usage?.[`${a.uid}_${this.today()}`];
-    return { total: rec?.total ?? 0, quota: this.state.appConfig.ai?.dailyQuotaPerTeacher ?? null };
+    const ai = this.state.appConfig.ai;
+    return { total: rec?.total ?? 0, quota: ai && 'dailyQuotaPerTeacher' in ai ? ai.dailyQuotaPerTeacher : DEFAULT_DAILY_QUOTA };
   }
 
   private async recordUsage(kind: UsageKind): Promise<void> {

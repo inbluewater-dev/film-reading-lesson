@@ -3,7 +3,7 @@ import { useCallback, useEffect, useMemo, useState } from 'react';
 import { useServices } from '../../app/AuthContext';
 import { useCatalog } from '../../app/CatalogContext';
 import { Alert, Badge, Button, errorMessage } from '../../components/ui';
-import { getAi } from '../../lib/ai';
+import { useAi } from '../../app/useAi';
 import { PROMPT_LABEL, PROMPT_VARIABLES, renderPrompt, unknownVariables } from '../../lib/ai/prompts';
 import { filmVars, lessonPlanVars, materialVars, strategyVars } from '../../lib/ai/promptVars';
 import { config } from '../../lib/config';
@@ -18,6 +18,7 @@ const fmt = (iso: string | null) => (iso ? new Date(iso).toLocaleString('ko-KR',
 export default function PromptsPage() {
   const catalog = useCatalog();
   const { prompts } = useServices();
+  const tracked = useAi();
   const [list, setList] = useState<PromptTemplate[]>([]);
   const [kind, setKind] = useState<PromptKind>('material');
   const [body, setBody] = useState('');
@@ -55,7 +56,7 @@ export default function PromptsPage() {
       const std = catalog.node(standardId);
       if (!std || std.type !== 'standard') throw new Error('성취기준을 고르세요.');
       const context = buildContext(catalog, [std.id], std.subjectId);
-      const ai = getAi();
+      const ai = tracked;
       const label = (id: string) => catalog.textTypes.types.find((t) => t.id === id)?.label ?? id;
       const tt = DEFAULT_PARAMS.textType;
       let vars: Record<string, string | number | null>;
@@ -174,6 +175,7 @@ export default function PromptsPage() {
             {config.aiMode === 'mock' ? '테스트 실행 (Mock)' : '테스트 실행'}
           </Button>
         </div>
+        {config.aiMode === 'gemini' && <p className="text-xs text-stone-500">실제 AI 테스트는 저장된 버전으로 부르고, 하루 한도에 1회로 셉니다. 고친 내용을 시험하려면 먼저 저장하세요.</p>}
         {test && (
           <div className="grid gap-4 lg:grid-cols-2">
             <div className="min-w-0">

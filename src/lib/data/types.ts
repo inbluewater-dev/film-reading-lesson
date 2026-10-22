@@ -49,7 +49,12 @@ export interface CreateUserInput {
 export interface AiSettings {
   /** 교사 1명이 하루에 AI로 만들 수 있는 횟수. null = 제한 없음 */
   dailyQuotaPerTeacher: number | null;
+  /** Gemini 모델 이름. null = 기본값(src/lib/ai/geminiCore.ts DEFAULT_MODEL) */
+  model?: string | null;
 }
+
+/** 설정이 없을 때의 하루 한도 (2026-10-22 사용자 결정: 정하지 않으면 20회) */
+export const DEFAULT_DAILY_QUOTA = 20;
 
 export type UsageKind = 'material' | 'films' | 'strategies' | 'lessonPlan';
 export const USAGE_LABEL: Record<UsageKind, string> = { material: '읽기자료', films: '영화 추천', strategies: '전략 추천 이유', lessonPlan: '수업지도안' };
@@ -172,6 +177,12 @@ export const INVITE_CODE_PATTERN = /^\S{4,32}$/;
 /** 로그인 ID → Firebase용 내부 이메일 (사용자에게 노출하지 않음, 가이드 §6.1) */
 export const LOGIN_EMAIL_DOMAIN = 'ttl-edu.local';
 export const toInternalEmail = (loginId: string) => `${loginId}@${LOGIN_EMAIL_DOMAIN}`;
+
+export function validateAiSettings(v: AiSettings): void {
+  const q = v.dailyQuotaPerTeacher;
+  if (q !== null && (!Number.isInteger(q) || q < 1 || q > 1000)) throw new AppError('invalid-input', '하루 한도는 1~1000 사이 정수로 정하거나 비워 두세요.');
+  if (v.model && !/^gemini-[a-z0-9.-]+$/.test(v.model)) throw new AppError('invalid-input', '모델 이름은 gemini-로 시작하는 영어 소문자·숫자·점·하이픈으로 쓰세요.');
+}
 
 export function validateSignUp(input: SignUpInput): void {
   if (!INVITE_CODE_PATTERN.test(input.inviteCode)) throw new AppError('wrong-invite-code', '가입 코드를 확인하세요.');

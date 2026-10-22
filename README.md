@@ -36,9 +36,9 @@
 | 설정 | 값 | 설명 |
 |---|---|---|
 | `VITE_DATA_MODE` | `local` (기본) | 브라우저 안 임시 저장소. 인터넷·Firebase 없이 개발·테스트 |
-| | `firebase` | 실서비스. Firebase 설정값 필요 (Phase 9~10) |
+| | `firebase` | 실서비스. Firebase 설정값 필요 — [docs/SETUP_Firebase.md](docs/SETUP_Firebase.md) |
 | `VITE_AI_MODE` | `mock` (기본) | 고정 샘플 응답. 인터넷 불필요 |
-| | `gemini` | 실제 AI 생성 (Phase 9) |
+| | `gemini` | 실제 AI 생성 (Firebase AI Logic + Gemini 무료 등급, `firebase` 모드에서만) |
 
 ## 내보내기 (인쇄·PDF, DOCX, HWPX)
 

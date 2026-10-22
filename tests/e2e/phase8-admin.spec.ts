@@ -167,5 +167,6 @@ test('하루 한도·사용 현황, 프롬프트 새 버전·테스트 실행', 
 
   await loginAdmin(page);
   await adminTab(page, '사용 현황');
-  await expect(page.getByTestId('usage-row').first()).toContainText('김영화 선생님');
+  await expect(page.getByTestId('usage-row').filter({ hasText: '김영화 선생님' })).toContainText('1');
+  await expect(page.getByTestId('usage-row').filter({ hasText: '관리자 (admin01)' })).toHaveCount(1); // 프롬프트 테스트 실행도 1회로 셈
 });

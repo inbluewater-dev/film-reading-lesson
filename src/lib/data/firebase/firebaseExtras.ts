@@ -3,7 +3,7 @@
 import type { Auth } from 'firebase/auth';
 import { collection, doc, getDoc, getDocs, runTransaction, setDoc, type Firestore } from 'firebase/firestore';
 import { DEFAULT_PROMPTS } from '../../ai/prompts';
-import { AppError, type AiSettings, type PromptKind, type PromptService, type PromptTemplate, type UsageRecord, type UsageService } from '../types';
+import { AppError, DEFAULT_DAILY_QUOTA, type AiSettings, type PromptKind, type PromptService, type PromptTemplate, type UsageRecord, type UsageService } from '../types';
 
 const KINDS = Object.keys(DEFAULT_PROMPTS) as PromptKind[];
 const kstDay = () => new Date(Date.now() + 9 * 3600_000).toISOString().slice(0, 10);
@@ -37,8 +37,10 @@ export function createFirebasePrompts(db: Firestore, auth: Auth): PromptService 
 
 export async function readAiSettings(db: Firestore): Promise<AiSettings> {
   const snap = await getDoc(doc(db, 'appConfig', 'ai'));
-  const q = snap.data()?.dailyQuotaPerTeacher;
-  return { dailyQuotaPerTeacher: typeof q === 'number' ? q : null };
+  const d = snap.data() ?? {};
+  // 필드가 없으면 기본 한도, null로 저장했으면 제한 없음
+  const q = 'dailyQuotaPerTeacher' in d ? (typeof d.dailyQuotaPerTeacher === 'number' ? d.dailyQuotaPerTeacher : null) : DEFAULT_DAILY_QUOTA;
+  return { dailyQuotaPerTeacher: q, model: typeof d.model === 'string' ? d.model : null };
 }
 
 export function createFirebaseUsage(db: Firestore, auth: Auth): UsageService {

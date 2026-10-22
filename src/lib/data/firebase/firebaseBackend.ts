@@ -1,6 +1,7 @@
 // Firebase 모드 백엔드 (실서비스). 권한은 firebase/firestore.rules가 강제하고, 여기서는 호출만 한다.
 // ⚠ 이 파일은 Claude 작업 환경에서 실제 Firebase에 연결해 시험하지 못했다(네트워크 차단) — Phase 9~10에서 검증.
 import { deleteApp, initializeApp } from 'firebase/app';
+import { initializeAppCheck, ReCaptchaV3Provider } from 'firebase/app-check';
 import {
   EmailAuthProvider,
   createUserWithEmailAndPassword,
@@ -22,11 +23,15 @@ import {
   type UsageRecord,
   type UserProfile,
   toInternalEmail,
+  validateAiSettings,
   validateSignUp,
 } from '../types';
 import type { LessonPlanRecord, MaterialRecord } from '../../library/types';
 import { createFirebaseCatalog } from './firebaseCatalog';
 import { createFirebasePrompts, createFirebaseUsage, readAiSettings } from './firebaseExtras';
+import { config } from '../../config';
+import { registerAi } from '../../ai';
+import { createGeminiProvider } from '../../ai/geminiProvider';
 import { createFirebaseOwnedStore } from './firebaseOwnedStore';
 
 export function createFirebaseServices(): Services {
@@ -38,8 +43,12 @@ export function createFirebaseServices(): Services {
     appId: env.VITE_FIREBASE_APP_ID,
   };
   const app = initializeApp(firebaseConfig);
+  // App Check(가이드 §8.1): 사이트 키가 있으면 켠다. 이 앱에서 온 요청만 AI·DB를 쓰게 한다
+  if (env.VITE_RECAPTCHA_SITE_KEY) initializeAppCheck(app, { provider: new ReCaptchaV3Provider(env.VITE_RECAPTCHA_SITE_KEY), isTokenAutoRefreshEnabled: true });
   const auth = getAuth(app);
   const db = getFirestore(app);
+  const prompts = createFirebasePrompts(db, auth);
+  if (config.aiMode === 'gemini') registerAi(createGeminiProvider(app, () => readAiSettings(db), prompts));
   let current: UserProfile | null = null;
   const listeners = new Set<(u: UserProfile | null) => void>();
 
@@ -74,7 +83,7 @@ export function createFirebaseServices(): Services {
 
   return {
     catalog: createFirebaseCatalog(db, auth, () => current),
-    prompts: createFirebasePrompts(db, auth),
+    prompts,
     usage: createFirebaseUsage(db, auth),
     library: {
       materials: createFirebaseOwnedStore<MaterialRecord>(db, auth, 'materials', () => current),
@@ -185,9 +194,8 @@ export function createFirebaseServices(): Services {
       },
       getAiSettings: () => readAiSettings(db).catch(mapAuthError),
       async setAiSettings(v) {
-        const q = v.dailyQuotaPerTeacher;
-        if (q !== null && (!Number.isInteger(q) || q < 1 || q > 1000)) throw new AppError('invalid-input', '하루 한도는 1~1000 사이 정수로 정하거나 비워 두세요.');
-        await setDoc(doc(db, 'appConfig', 'ai'), { dailyQuotaPerTeacher: q }, { merge: true }).catch(mapAuthError);
+        validateAiSettings(v);
+        await setDoc(doc(db, 'appConfig', 'ai'), { dailyQuotaPerTeacher: v.dailyQuotaPerTeacher, ...(v.model !== undefined ? { model: v.model || null } : {}) }, { merge: true }).catch(mapAuthError);
       },
       async listUsage() {
         const snap = await getDocs(collection(db, 'usage')).catch(mapAuthError);
