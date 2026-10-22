@@ -15,7 +15,9 @@ import {
   type UserProfile,
   validateSignUp,
 } from '../types';
+import type { LessonPlanRecord, LibraryService, MaterialRecord } from '../../library/types';
 import { LocalCatalog } from './localCatalog';
+import { LocalOwnedStore } from './localOwnedStore';
 import type { KeyValueStorage } from './storage';
 
 const STORAGE_KEY = 'frl:local:v1';
@@ -52,6 +54,7 @@ export class LocalBackend implements Services {
   readonly auth: AuthService;
   readonly admin: AdminService;
   readonly catalog: CatalogService;
+  readonly library: LibraryService;
   private listeners = new Set<(u: UserProfile | null) => void>();
   private state!: State;
   private ready: Promise<void>;
@@ -76,6 +79,13 @@ export class LocalBackend implements Services {
       setInviteCode: (code) => this.setInviteCode(code),
     };
     this.catalog = new LocalCatalog(opts.storage, () => this.actor());
+    const me = () => (this.state?.sessionUid ? this.state.users[this.state.sessionUid] ?? null : null);
+    const now = () => this.nowIso();
+    const id = () => this.newId();
+    this.library = {
+      materials: new LocalOwnedStore<MaterialRecord>(opts.storage, 'frl:local:materials:v1', me, now, id),
+      lessonPlans: new LocalOwnedStore<LessonPlanRecord>(opts.storage, 'frl:local:lessonPlans:v1', me, now, id),
+    };
   }
 
   /** 초기화(시드 포함)가 끝날 때까지 기다린다 */

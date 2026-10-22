@@ -23,7 +23,9 @@ import {
   toInternalEmail,
   validateSignUp,
 } from '../types';
+import type { LessonPlanRecord, MaterialRecord } from '../../library/types';
 import { createFirebaseCatalog } from './firebaseCatalog';
+import { createFirebaseOwnedStore } from './firebaseOwnedStore';
 
 export function createFirebaseServices(): Services {
   const env = import.meta.env;
@@ -69,6 +71,10 @@ export function createFirebaseServices(): Services {
 
   return {
     catalog: createFirebaseCatalog(db),
+    library: {
+      materials: createFirebaseOwnedStore<MaterialRecord>(db, auth, 'materials', () => current),
+      lessonPlans: createFirebaseOwnedStore<LessonPlanRecord>(db, auth, 'lessonPlans', () => current),
+    },
     auth: {
       async signIn(loginId, password) {
         if (!LOGIN_ID_PATTERN.test(loginId)) throw new AppError('invalid-login-id', '아이디는 영어 소문자와 숫자 4~20자입니다.');

@@ -6,6 +6,9 @@ import LoginPage from '../features/auth/LoginPage';
 import PendingPage from '../features/auth/PendingPage';
 import SignupPage from '../features/auth/SignupPage';
 import ExplorerPage from '../features/curriculum/ExplorerPage';
+import LibraryPage from '../features/library/LibraryPage';
+import MaterialDetailPage from '../features/library/MaterialDetailPage';
+import WizardPage from '../features/wizard/WizardPage';
 import TeacherHome from '../features/home/TeacherHome';
 import { CatalogGate, CatalogProvider } from './CatalogContext';
 import { DraftProvider } from './DraftContext';
@@ -24,6 +27,9 @@ function Routed() {
       <Route element={<RequireActive><CatalogProvider><DraftProvider><Layout /></DraftProvider></CatalogProvider></RequireActive>}>
         <Route path="/teacher" element={<TeacherHome />} />
         <Route path="/explore" element={<CatalogGate><ExplorerPage /></CatalogGate>} />
+        <Route path="/lesson" element={<CatalogGate><WizardPage /></CatalogGate>} />
+        <Route path="/library" element={<LibraryPage />} />
+        <Route path="/library/material/:id" element={<MaterialDetailPage />} />
         <Route path="/account" element={<AccountPage />} />
         <Route path="/admin" element={<RequireActive role="admin"><AdminHome /></RequireActive>} />
       </Route>

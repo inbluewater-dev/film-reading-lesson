@@ -59,6 +59,7 @@ export interface Services {
   auth: AuthService;
   admin: AdminService;
   catalog: CatalogService;
+  library: import('../library/types').LibraryService;
 }
 
 /** 화면에 그대로 보여줄 수 있는 한국어 메시지를 담은 오류 */
