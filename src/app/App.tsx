@@ -8,6 +8,8 @@ import SignupPage from '../features/auth/SignupPage';
 import ExplorerPage from '../features/curriculum/ExplorerPage';
 import LibraryPage from '../features/library/LibraryPage';
 import MaterialDetailPage from '../features/library/MaterialDetailPage';
+import PlanDetailPage from '../features/library/PlanDetailPage';
+import SharedPage from '../features/library/SharedPage';
 import WizardPage from '../features/wizard/WizardPage';
 import TeacherHome from '../features/home/TeacherHome';
 import { CatalogGate, CatalogProvider } from './CatalogContext';
@@ -30,6 +32,8 @@ function Routed() {
         <Route path="/lesson" element={<CatalogGate><WizardPage /></CatalogGate>} />
         <Route path="/library" element={<LibraryPage />} />
         <Route path="/library/material/:id" element={<MaterialDetailPage />} />
+        <Route path="/library/plan/:id" element={<CatalogGate><PlanDetailPage /></CatalogGate>} />
+        <Route path="/shared" element={<SharedPage />} />
         <Route path="/account" element={<AccountPage />} />
         <Route path="/admin" element={<RequireActive role="admin"><AdminHome /></RequireActive>} />
       </Route>

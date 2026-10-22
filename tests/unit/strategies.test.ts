@@ -54,3 +54,32 @@ describe('독서전략 추천 (§8.4)', () => {
     expect(r.candidates.map((c) => c.label)).toEqual(['RAFT']);
   });
 });
+
+describe('지도안 뼈대 (§8.5)', async () => {
+  const { applyFill, buildSkeleton, placementOf, rescaleMinutes, timeCheck } = await import('../../src/lib/lesson/plan');
+  it('전략 배치: 읽기 전→4, 중→5, 후→6, 권장 사태가 있으면 그것', () => {
+    expect(placementOf(cat, 'rs:Strat_SQ3R')).toEqual([4, 5]); // 탐색(전)+조절(미분류)
+    expect(placementOf(cat, 'rs:Strat_오류_찾기')).toEqual([5, 6]); // 분석(미분류)+평가(후)
+    const c2 = new Catalog(BUNDLED_SOURCE, { ...EMPTY_OVERRIDES, strategies: { 'rs:Strat_SQ3R': { recommendedEvents: [6] } } });
+    expect(placementOf(c2, 'rs:Strat_SQ3R')).toEqual([6]);
+  });
+  it('9사태·기본 시간·전략이 들어간 뼈대, 시간 검증', () => {
+    const rows = buildSkeleton(cat, 50, ['rs:Strat_KWL']);
+    expect(rows.map((r) => r.label)).toEqual(cat.gagne.events.map((e) => e.label));
+    expect(timeCheck(rows, 50)).toEqual({ total: 50, ok: true, diff: 0 });
+    expect(rows.filter((r) => r.strategyIds.includes('rs:Strat_KWL')).map((r) => r.seq)).toEqual([4, 5]);
+    const bad = rows.map((r, i) => (i === 0 ? { ...r, minutes: 10 } : r));
+    expect(timeCheck(bad, 50)).toMatchObject({ ok: false, diff: 7 });
+  });
+  it('다시 만들기: 잠근 칸은 바뀌지 않는다, 시간 재배분도 잠근 칸은 유지', () => {
+    const rows = buildSkeleton(cat, 50, []).map((r) => (r.seq === 1 ? { ...r, teacherActivity: '내가 쓴 도입', minutes: 7, locked: { teacherActivity: true, minutes: true } } : r));
+    const fill = rows.map((r) => ({ seq: r.seq, teacherActivity: `AI ${r.seq}`, studentActivity: 's', material: 'm', assessment: 'a' }));
+    const out = applyFill(rows, fill);
+    expect(out[0].teacherActivity).toBe('내가 쓴 도입');
+    expect(out[0].studentActivity).toBe('s');
+    expect(out[1].teacherActivity).toBe('AI 2');
+    const re = rescaleMinutes(out, 100);
+    expect(re[0].minutes).toBe(7);
+    expect(re[1].minutes).toBe(3);
+  });
+});

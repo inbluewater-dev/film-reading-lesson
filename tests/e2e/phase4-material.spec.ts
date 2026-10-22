@@ -47,11 +47,11 @@ test('조건 입력 → 읽기자료 생성·편집·검토·저장 → 보관�
 
   // 보관함
   await page.getByRole('link', { name: '내 보관함' }).click();
-  await expect(page.getByTestId('material-item')).toHaveCount(1);
-  await expect(page.getByTestId('material-item')).toContainText('몽타주로 읽는 장면의 연결');
-  await expect(page.getByTestId('material-item')).toContainText('검토함');
+  await expect(page.getByTestId('materials-item')).toHaveCount(1);
+  await expect(page.getByTestId('materials-item')).toContainText('몽타주로 읽는 장면의 연결');
+  await expect(page.getByTestId('materials-item')).toContainText('검토함');
   await page.getByRole('button', { name: '복제' }).click();
-  await expect(page.getByTestId('material-item')).toHaveCount(2);
+  await expect(page.getByTestId('materials-item')).toHaveCount(2);
   await shot(page, 'p4-03-library');
   await page.getByRole('link', { name: '몽타주로 읽는 장면의 연결' }).first().click();
   await page.getByLabel('제목', { exact: true }).fill('몽타주 읽기 (수정)');
@@ -60,5 +60,5 @@ test('조건 입력 → 읽기자료 생성·편집·검토·저장 → 보관�
   await page.getByRole('link', { name: '← 내 보관함' }).click();
   await page.getByRole('button', { name: '삭제' }).first().click();
   await page.getByRole('button', { name: '삭제', exact: true }).first().click();
-  await expect(page.getByTestId('material-item')).toHaveCount(1);
+  await expect(page.getByTestId('materials-item')).toHaveCount(1);
 });

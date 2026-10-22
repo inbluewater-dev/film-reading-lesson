@@ -10,6 +10,7 @@ import ConditionsStep from './ConditionsStep';
 import MaterialStep from './MaterialStep';
 import StepBar from './StepBar';
 import StrategyStep from './StrategyStep';
+import PlanStep from './PlanStep';
 import { useWizard, type Step } from './state';
 
 export default function WizardPage() {
@@ -52,7 +53,8 @@ export default function WizardPage() {
     }
   }
 
-  const reachable = (s: Step) => s === 1 || (s === 2 && !!w.material) || (s >= 3 && !!w.materialId && (s <= 3 || w.strategyIds.length > 0)) ;
+  const reachable = (s: Step) =>
+    s === 1 || (s === 2 && !!w.material) || (s === 3 && !!w.materialId) || (s === 4 && !!w.materialId && w.strategyIds.length > 0) || (s === 5 && !!w.planId);
   const go = (s: Step) => reachable(s) && patch({ step: s });
 
   return (
@@ -83,7 +85,8 @@ export default function WizardPage() {
       {w.step === 1 && <ConditionsStep onGenerate={() => generate()} />}
       {w.step === 2 && <MaterialStep busy={busy} onRegenerate={generate} onNext={() => patch({ step: 3 })} />}
       {w.step === 3 && <StrategyStep onNext={() => patch({ step: 4 })} />}
-      {w.step >= 4 && <p className="text-sm text-stone-500">이 단계는 다음 업데이트에서 추가됩니다.</p>}
+      {w.step === 4 && <PlanStep onNext={() => patch({ step: 5 })} />}
+      {w.step === 5 && <p className="text-sm text-stone-500">이 단계는 다음 업데이트에서 추가됩니다.</p>}
       {busy && <p role="status" className="text-sm text-stone-600">AI가 만드는 중입니다…</p>}
     </div>
   );
