@@ -85,8 +85,17 @@ describe('오류 안내', () => {
     ['Firebase App Check token is invalid', 'App Check'],
     ['Candidate was blocked due to SAFETY', '안전 기준'],
     ['Failed to fetch', '인터넷'],
+    ['[404] models/gemini-x is not found for API version v1beta', '모델을 찾을 수 없습니다'],
+    ['Firebase AI Logic API has not been used in project 123 before or it is disabled', 'AI Logic'],
     ['무언가', '응답하지 못했습니다'],
-  ])('%s', (m, expected) => expect(aiError(new Error(m)).message).toContain(expected));
+  ])('%s', (m, expected) => {
+    const r = aiError(new Error(m)).message;
+    expect(r).toContain(expected);
+    expect(r).toContain('(오류 내용:');
+  });
+  it('“generateContent”라는 말만으로 사용량 초과로 오인하지 않는다', () => {
+    expect(aiError(new Error('models/gemini-3.8-flash:generateContent: [400] Bad Request')).message).toContain('응답하지 못했습니다');
+  });
   it('호출 실패는 재시도하지 않고 바로 안내한다', async () => {
     const { c, calls } = core([new Error('429 quota')]);
     await expect(c.suggestFilms({ context: ctx, count: 3 })).rejects.toThrow('무료 사용량');

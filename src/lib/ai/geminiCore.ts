@@ -46,15 +46,19 @@ const SCHEMAS = {
   lessonPlan: jsonSchemaOf(LessonPlanResult),
 } as const;
 
-/** 오류를 화면용 한국어 메시지로 */
+/** 오류를 화면용 한국어 메시지로 — 원인을 찾을 수 있게 원래 오류 내용을 짧게 붙인다 */
 export function aiError(e: unknown): AppError {
   if (e instanceof AppError) return e;
   const msg = String((e as { message?: string })?.message ?? e);
-  if (/429|quota|RESOURCE_EXHAUSTED|rate/i.test(msg)) return new AppError('unavailable', 'AI 무료 사용량이 잠시 다 찼습니다. 1~2분 뒤 다시 시도하세요. 계속되면 관리자에게 알려 주세요.');
-  if (/app.?check|403|PERMISSION_DENIED|API key/i.test(msg)) return new AppError('unavailable', 'AI 서비스 연결이 허용되지 않았습니다. 관리자에게 Firebase AI Logic·App Check 설정을 확인해 달라고 하세요.');
-  if (/SAFETY|blocked/i.test(msg)) return new AppError('unavailable', 'AI가 안전 기준 때문에 답하지 않았습니다. 추가 요청이나 영화를 바꿔 다시 시도하세요.');
-  if (/network|fetch|offline/i.test(msg)) return new AppError('unavailable', '인터넷 연결을 확인한 뒤 다시 시도하세요.');
-  return new AppError('unavailable', 'AI가 응답하지 못했습니다. 잠시 뒤 다시 시도하세요.');
+  console.error('[AI 오류]', e);
+  const detail = ` (오류 내용: ${msg.replace(/\s+/g, ' ').slice(0, 220)})`;
+  const err = (text: string) => new AppError('unavailable', text + detail);
+  if (/\b429\b|RESOURCE_EXHAUSTED|quota exceeded|exceeded your current quota|rate.?limit/i.test(msg)) return err('AI 무료 사용량이 잠시 다 찼습니다. 1~2분 뒤 다시 시도하세요. 계속되면 관리자에게 알려 주세요.');
+  if (/\b404\b|NOT_FOUND|not found for API version|is not supported for generateContent/i.test(msg)) return err('AI 모델을 찾을 수 없습니다. 관리자 › 사용 현황에서 다른 모델을 골라 보세요.');
+  if (/app.?check|\b403\b|PERMISSION_DENIED|API key|api-not-enabled|has not been used|is disabled|SERVICE_DISABLED/i.test(msg)) return err('AI 서비스 연결이 허용되지 않았습니다. Firebase 콘솔에서 AI Logic(Gemini Developer API)이 켜져 있는지, App Check 설정을 확인하세요.');
+  if (/SAFETY|blocked/i.test(msg)) return err('AI가 안전 기준 때문에 답하지 않았습니다. 추가 요청이나 영화를 바꿔 다시 시도하세요.');
+  if (/network|failed to fetch|offline/i.test(msg)) return err('인터넷 연결을 확인한 뒤 다시 시도하세요.');
+  return err('AI가 응답하지 못했습니다. 잠시 뒤 다시 시도하세요.');
 }
 
 export class GeminiCore implements AiProvider {
