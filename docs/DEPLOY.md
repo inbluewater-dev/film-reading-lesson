@@ -3,15 +3,19 @@
 배포 주소: **https://inbluewater-dev.github.io/film-reading-lesson/**
 main 브랜치에 코드가 들어오면 GitHub가 자동으로 테스트 → 빌드 → 배포합니다(`.github/workflows/deploy.yml`).
 
-## 1. reCAPTCHA v3 키 만들기 (App Check용, 무료)
-1. https://www.google.com/recaptcha/admin/create 에 Firebase와 같은 Google 계정으로 들어갑니다.
-2. 라벨: `film-reading-lesson`, 유형: **점수 기반(v3)**.
-3. 도메인: `inbluewater-dev.github.io` (그리고 `localhost`).
-4. 제출하면 **사이트 키**와 **비밀 키**가 나옵니다. 둘 다 복사해 둡니다.
-   - 화면이 Google Cloud 콘솔로 넘어가 'reCAPTCHA 키 만들기'가 나오면, 같은 프로젝트(film-reading-lesson)를 고르고 웹 사이트용 키를 만들면 됩니다. 이 경우 비밀 키 대신 다른 안내가 나오면 화면을 캡처해 Claude에게 보여 주세요.
+## 1. Fraud Defense(이전 reCAPTCHA Enterprise) 키 만들기 (App Check용)
+reCAPTCHA 클래식(v3)은 지원이 중단되어 Firebase가 Fraud Defense를 쓰라고 안내합니다. Spark(무료) 요금제에서도 쓸 수 있습니다.
+1. https://console.cloud.google.com/security/recaptcha 에 Firebase와 같은 Google 계정으로 들어갑니다.
+2. 위쪽 프로젝트 선택에서 **film-reading-lesson**을 고릅니다. 'API 사용 설정(Enable)'이 나오면 누릅니다.
+3. **키 만들기(Create key)** → 이름: `film-reading-web`, 플랫폼 유형: **웹(Website)**.
+4. 도메인 목록에 `inbluewater-dev.github.io` 를 추가합니다. **`localhost`는 넣지 않습니다**(내 컴퓨터는 디버그 토큰 사용).
+5. **체크박스 문제 사용(Use checkbox challenge)은 끈 채로**(점수 기반) 두고 만들기.
+6. 만들어진 **키 ID**(긴 영문·숫자)를 복사합니다. 이것이 사이트 키입니다.
 
 ## 2. Firebase App Check에 등록
-Firebase 콘솔 **App Check → 앱 → Film-Reading(웹) → reCAPTCHA** → **비밀 키** 붙여 넣기 → 저장.
+Firebase 콘솔 **App Check → 앱 → Film-Reading(웹)** → **Fraud Defense(이전 명칭: reCAPTCHA Enterprise)** 를 펼침 → 1단계 **키 ID** 붙여 넣기 → 저장.
+- 그 아래 'reCAPTCHA'(클래식) 칸은 비워 둡니다.
+- 위험 기준(threshold)은 기본값 0.5 그대로.
 
 ## 3. Firebase 로그인에 배포 주소 허용
 Firebase 콘솔 **Authentication → 설정 → 승인된 도메인 → 도메인 추가** → `inbluewater-dev.github.io`.
@@ -25,7 +29,7 @@ Firebase 콘솔 **Authentication → 설정 → 승인된 도메인 → 도메�
    | `VITE_FIREBASE_AUTH_DOMAIN` | 〃 |
    | `VITE_FIREBASE_PROJECT_ID` | 〃 |
    | `VITE_FIREBASE_APP_ID` | 〃 |
-   | `VITE_RECAPTCHA_SITE_KEY` | 1단계의 **사이트 키**(비밀 키 아님) |
+   | `VITE_RECAPTCHA_SITE_KEY` | 1단계의 **키 ID** |
    - `VITE_APPCHECK_DEBUG_TOKEN`은 **넣지 않습니다**(내 컴퓨터 전용).
 
 ## 5. 배포하기

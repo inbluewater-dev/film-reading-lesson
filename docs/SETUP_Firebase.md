@@ -59,10 +59,8 @@ npx firebase-tools deploy --only firestore:rules,firestore:indexes
 4. 명령 프롬프트 창을 닫고 새로 열어 `npm run dev`.
 - 이 값은 비밀번호처럼 다룹니다. 컴퓨터마다 따로 만들고, 쓰지 않는 값은 콘솔에서 지웁니다. `npm run dev`에서만 쓰이고 배포 빌드에는 들어가지 않습니다.
 
-### 7-2. 배포할 때(Phase 10): reCAPTCHA v3
-1. https://www.google.com/recaptcha/admin 에서 **reCAPTCHA v3(점수 기반)** 키 만들기 → 도메인에 배포 주소(`inbluewater-dev.github.io`) 추가 → **사이트 키**와 **비밀 키**.
-2. Firebase 콘솔 **App Check → 앱 → 웹 앱 → reCAPTCHA** 에 비밀 키를 넣고 저장.
-3. 배포용 설정에 `VITE_RECAPTCHA_SITE_KEY=사이트 키`.
+### 7-2. 배포할 때(Phase 10): Fraud Defense(이전 reCAPTCHA Enterprise)
+reCAPTCHA 클래식(v3)은 지원 중단 → `docs/DEPLOY.md` 1~2단계대로 Fraud Defense 키를 만들어 App Check에 등록하고, 키 ID를 배포 설정의 `VITE_RECAPTCHA_SITE_KEY`에 넣습니다.
 
 ### 7-3. 적용(Enforce)
 App Check 화면에서 '확인된 요청'이 100%에 가까운지 본 뒤, **Firebase AI Logic**(그리고 Cloud Firestore)을 '적용됨'으로 바꿉니다.
