@@ -22,6 +22,10 @@ export default defineConfig(({ mode }) => {
       build: { outDir: 'dist-demo' },
     };
   }
+  // Firebase 호스팅(https://film-reading-lesson.web.app)용: 사이트 맨 위에서 서비스되므로 base '/'
+  if (mode === 'hosting') {
+    return { plugins: [react()], base: '/', build: { outDir: 'dist-hosting' } };
+  }
   return {
     plugins: [react()],
     // GitHub Pages는 /저장소이름/ 아래에서 서비스됨 (개발 서버에서는 '/')

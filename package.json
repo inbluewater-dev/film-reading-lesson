@@ -15,7 +15,8 @@
     "test:e2e": "playwright test",
     "typecheck": "tsc --noEmit",
     "test:rules": "npx -y firebase-tools@15.32.1 emulators:exec --only firestore --project film-reading-lesson-test \"vitest run -c vitest.rules.config.ts\"",
-    "build:demo": "npm run compile:data && tsc --noEmit && vite build --mode demo && node scripts/make-demo-page.mjs"
+    "build:demo": "npm run compile:data && tsc --noEmit && vite build --mode demo && node scripts/make-demo-page.mjs",
+    "build:hosting": "npm run compile:data && tsc --noEmit && vite build --mode hosting"
   },
   "dependencies": {
     "docx": "^9.5.1",

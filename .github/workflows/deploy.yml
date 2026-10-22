@@ -1,7 +1,9 @@
-# GitHub Pages 배포 (가이드 Phase 10): main에 들어오면 테스트 → 빌드(Firebase 모드 + 실제 AI) → 배포
+# 배포 (가이드 Phase 10): main에 들어오면 테스트 → 빌드 → 두 곳에 배포
+#  - GitHub Pages: https://inbluewater-dev.github.io/film-reading-lesson/
+#  - Firebase 호스팅: https://film-reading-lesson.web.app (Secrets에 FIREBASE_SERVICE_ACCOUNT_FILM_READING_LESSON가 있을 때만)
 # 필요한 저장소 Secrets: VITE_FIREBASE_API_KEY, VITE_FIREBASE_AUTH_DOMAIN, VITE_FIREBASE_PROJECT_ID, VITE_FIREBASE_APP_ID, VITE_RECAPTCHA_SITE_KEY
 # (docs/DEPLOY.md 참고. 디버그 토큰은 넣지 않는다)
-name: 배포 (GitHub Pages)
+name: 배포 (GitHub Pages · Firebase 호스팅)
 
 on:
   push:
@@ -17,18 +19,20 @@ concurrency:
   group: pages
   cancel-in-progress: true
 
+env:
+  VITE_DATA_MODE: firebase
+  VITE_AI_MODE: gemini
+  VITE_FIREBASE_API_KEY: ${{ secrets.VITE_FIREBASE_API_KEY }}
+  VITE_FIREBASE_AUTH_DOMAIN: ${{ secrets.VITE_FIREBASE_AUTH_DOMAIN }}
+  VITE_FIREBASE_PROJECT_ID: ${{ secrets.VITE_FIREBASE_PROJECT_ID }}
+  VITE_FIREBASE_APP_ID: ${{ secrets.VITE_FIREBASE_APP_ID }}
+  VITE_RECAPTCHA_SITE_KEY: ${{ secrets.VITE_RECAPTCHA_SITE_KEY }}
+
 jobs:
   build:
     runs-on: ubuntu-latest
     env:
-      VITE_DATA_MODE: firebase
-      VITE_AI_MODE: gemini
       VITE_BASE: /${{ github.event.repository.name }}/
-      VITE_FIREBASE_API_KEY: ${{ secrets.VITE_FIREBASE_API_KEY }}
-      VITE_FIREBASE_AUTH_DOMAIN: ${{ secrets.VITE_FIREBASE_AUTH_DOMAIN }}
-      VITE_FIREBASE_PROJECT_ID: ${{ secrets.VITE_FIREBASE_PROJECT_ID }}
-      VITE_FIREBASE_APP_ID: ${{ secrets.VITE_FIREBASE_APP_ID }}
-      VITE_RECAPTCHA_SITE_KEY: ${{ secrets.VITE_RECAPTCHA_SITE_KEY }}
     steps:
       - uses: actions/checkout@v4
       - uses: actions/setup-node@v4
@@ -64,3 +68,30 @@ jobs:
     steps:
       - id: deployment
         uses: actions/deploy-pages@v4
+
+  firebase-hosting:
+    needs: build
+    runs-on: ubuntu-latest
+    env:
+      HAS_SERVICE_ACCOUNT: ${{ secrets.FIREBASE_SERVICE_ACCOUNT_FILM_READING_LESSON != '' }}
+    steps:
+      - name: 준비 확인
+        if: env.HAS_SERVICE_ACCOUNT != 'true'
+        run: echo "::notice::Firebase 호스팅 자동 배포는 아직 꺼져 있습니다. docs/DEPLOY.md '7. Firebase 호스팅'을 보고 서비스 계정 Secret을 만드세요."
+      - uses: actions/checkout@v4
+        if: env.HAS_SERVICE_ACCOUNT == 'true'
+      - uses: actions/setup-node@v4
+        if: env.HAS_SERVICE_ACCOUNT == 'true'
+        with:
+          node-version: 22
+          cache: npm
+      - if: env.HAS_SERVICE_ACCOUNT == 'true'
+        run: npm ci
+      - name: Firebase 호스팅 배포 (빌드는 firebase.json predeploy가 함)
+        if: env.HAS_SERVICE_ACCOUNT == 'true'
+        uses: FirebaseExtended/action-hosting-deploy@v0
+        with:
+          repoToken: ${{ secrets.GITHUB_TOKEN }}
+          firebaseServiceAccount: ${{ secrets.FIREBASE_SERVICE_ACCOUNT_FILM_READING_LESSON }}
+          projectId: film-reading-lesson
+          channelId: live

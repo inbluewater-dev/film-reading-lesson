@@ -45,3 +45,23 @@ Firebase 콘솔 **Authentication → 설정 → 승인된 도메인 → 도메�
 - Actions가 빨간 X: 클릭해서 빨간 줄의 문장을 Claude에게 보여 주세요. "Secrets에 다음 값을 넣어 주세요"면 4-2단계를 확인.
 - 배포 주소에서 로그인 오류(auth/unauthorized-domain): 3단계 확인.
 - AI에서 App Check 오류: 1~2단계와 Secrets의 사이트 키 확인.
+
+## 7. Firebase 호스팅 (두 번째 주소: https://film-reading-lesson.web.app)
+GitHub Pages와 **같은 코드가 함께** 올라갑니다. 처음 한 번만 설정합니다.
+
+1. **Fraud Defense 키에 도메인 추가**: https://console.cloud.google.com/security/recaptcha?project=film-reading-lesson → `film-reading-web` 키 → 수정 → 도메인에 `film-reading-lesson.web.app`, `film-reading-lesson.firebaseapp.com` 추가 → 저장.
+   (로그인 승인된 도메인에는 두 주소가 처음부터 들어 있어 따로 할 일 없음)
+2. **호스팅 시작**: Firebase 콘솔 **Hosting → 시작하기** → 안내 화면은 '다음'으로 넘기고 마지막에 '콘솔로 이동'(명령은 실행하지 않아도 됨).
+3. **자동 배포용 열쇠(서비스 계정) 만들기**: 최신 코드를 받은 폴더에서
+   ```
+   npx firebase-tools init hosting:github
+   ```
+   - 저장소를 물으면 `inbluewater-dev/film-reading-lesson`
+   - 브라우저가 열리면 GitHub 로그인·허용
+   - "Uploaded service account JSON to GitHub as secret **FIREBASE_SERVICE_ACCOUNT_FILM_READING_LESSON**" 이 나오면 성공 (이름이 다르면 Claude에게 알려 주기)
+   - 이어서 나오는 질문(build script, automatic deployment)은 모두 **N** — 배포 설정은 이미 저장소에 있음
+   - 폴더에 `firebase-hosting-pull-request.yml` 같은 파일이 새로 생겨도 그냥 두면 됩니다(GitHub에 올리지 않음)
+4. GitHub **Actions → 배포 → Run workflow**. 'firebase-hosting'까지 초록색이면 https://film-reading-lesson.web.app 에서 확인.
+
+### (선택) 내 컴퓨터에서 바로 올리기
+`.env.local`에 `VITE_RECAPTCHA_SITE_KEY=키 ID`를 넣은 뒤 `npx firebase-tools deploy --only hosting` (빌드는 자동).

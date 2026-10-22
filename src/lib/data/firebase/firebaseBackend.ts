@@ -50,10 +50,12 @@ export function createFirebaseServices(): Services {
   if (env.VITE_RECAPTCHA_SITE_KEY || debugToken)
     initializeAppCheck(app, {
       // 디버그 토큰만 있을 때는 reCAPTCHA를 불러오지 않는다(디버그 모드가 토큰을 대신 만든다)
-      provider: env.VITE_RECAPTCHA_SITE_KEY
-        ? // reCAPTCHA 클래식(v3)은 지원 중단 → Fraud Defense(이전 reCAPTCHA Enterprise) 점수 기반 키
-          new ReCaptchaEnterpriseProvider(env.VITE_RECAPTCHA_SITE_KEY)
-        : new CustomProvider({ getToken: () => Promise.reject(new Error('App Check: reCAPTCHA 사이트 키가 없습니다.')) }),
+      // 내 컴퓨터(디버그 토큰)에서는 사이트 키가 있어도 reCAPTCHA를 불러오지 않는다(localhost는 키 도메인에 없음)
+      provider:
+        env.VITE_RECAPTCHA_SITE_KEY && !debugToken
+          ? // reCAPTCHA 클래식(v3)은 지원 중단 → Fraud Defense(이전 reCAPTCHA Enterprise) 점수 기반 키
+            new ReCaptchaEnterpriseProvider(env.VITE_RECAPTCHA_SITE_KEY)
+          : new CustomProvider({ getToken: () => Promise.reject(new Error('App Check: reCAPTCHA 사이트 키가 없습니다.')) }),
       isTokenAutoRefreshEnabled: true,
     });
   const auth = getAuth(app);
