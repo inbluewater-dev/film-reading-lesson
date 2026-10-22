@@ -24,6 +24,7 @@
    VITE_FIREBASE_PROJECT_ID=복사한 projectId
    VITE_FIREBASE_APP_ID=복사한 appId
    VITE_RECAPTCHA_SITE_KEY=
+   VITE_APPCHECK_DEBUG_TOKEN=
    ```
    (Firebase 웹 설정값은 비밀번호가 아니라 앱 주소 같은 값이라 화면 코드에 들어가도 됩니다. 접근 제어는 보안 규칙과 App Check가 합니다.)
 
@@ -48,12 +49,23 @@ npx firebase-tools deploy --only firestore:rules,firestore:indexes
 2. Firebase가 Gemini용 키를 알아서 만들고 관리합니다. **키를 복사해 앱이나 `.env.local`에 넣지 않습니다.**
 3. 기본 모델은 `gemini-3.8-flash`입니다. 관리자 화면 › 사용 현황에서 바꿀 수 있습니다.
 
-## 7. App Check (권장 — 배포 전에)
-다른 사이트가 우리 프로젝트의 AI를 몰래 쓰지 못하게 막습니다.
-1. https://www.google.com/recaptcha/admin 에서 **reCAPTCHA v3** 사이트 등록 → 도메인에 `localhost`와 (배포 후) `inbluewater-dev.github.io` 추가 → **사이트 키**와 **비밀 키**를 받습니다.
-2. Firebase 콘솔 **App Check → 앱 → 웹 앱 → reCAPTCHA** 에 비밀 키를 넣고 저장합니다.
-3. `.env.local`의 `VITE_RECAPTCHA_SITE_KEY=`에 사이트 키를 넣습니다.
-4. 처음에는 **‘적용(Enforce)’을 누르지 말고** 며칠 지켜본 뒤(App Check 화면에 ‘확인된 요청’이 쌓이는지 확인), AI Logic과 Firestore에 적용합니다.
+## 7. App Check (필수 — 2026-11-02부터 AI Logic에 필수)
+다른 사이트가 우리 프로젝트의 AI를 몰래 쓰지 못하게 막습니다. Firebase 콘솔에 "2026년 11월 2일부터 Firebase AI Logic을 사용하려면 앱 체크 시행이 필수"라고 안내되어 있습니다.
+
+### 7-1. 내 컴퓨터에서 개발할 때: 디버그 토큰
+1. Firebase 콘솔 **App Check → 앱** 탭 → 웹 앱(Film-Reading) 줄 오른쪽 **⋮ 메뉴 → 디버그 토큰 관리 → 디버그 토큰 추가 → 생성**.
+2. 이름(예: 집 PC)을 적고, 만들어진 값(긴 영문·숫자)을 복사해 저장합니다.
+3. `.env.local`에 한 줄 추가: `VITE_APPCHECK_DEBUG_TOKEN=복사한 값`
+4. 명령 프롬프트 창을 닫고 새로 열어 `npm run dev`.
+- 이 값은 비밀번호처럼 다룹니다. 컴퓨터마다 따로 만들고, 쓰지 않는 값은 콘솔에서 지웁니다. `npm run dev`에서만 쓰이고 배포 빌드에는 들어가지 않습니다.
+
+### 7-2. 배포할 때(Phase 10): reCAPTCHA v3
+1. https://www.google.com/recaptcha/admin 에서 **reCAPTCHA v3(점수 기반)** 키 만들기 → 도메인에 배포 주소(`inbluewater-dev.github.io`) 추가 → **사이트 키**와 **비밀 키**.
+2. Firebase 콘솔 **App Check → 앱 → 웹 앱 → reCAPTCHA** 에 비밀 키를 넣고 저장.
+3. 배포용 설정에 `VITE_RECAPTCHA_SITE_KEY=사이트 키`.
+
+### 7-3. 적용(Enforce)
+App Check 화면에서 '확인된 요청'이 100%에 가까운지 본 뒤, **Firebase AI Logic**(그리고 Cloud Firestore)을 '적용됨'으로 바꿉니다.
 
 ## 8. 가입 코드 만들기
 **Firestore Database → 컬렉션 시작 → 컬렉션 ID `appConfig` → 문서 ID `signup` → 필드 `inviteCode`(문자열) = 원하는 가입 코드(공백 없이 4~32자).**
