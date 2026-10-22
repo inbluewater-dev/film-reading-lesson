@@ -1,6 +1,5 @@
 // 인쇄(PDF)용 HTML: A4 인쇄 CSS. 미리보기(iframe)·인쇄·HTML 파일 저장에 같은 결과를 쓴다
-import { layoutRows } from './docx';
-import type { Block, ExportDoc } from './model';
+import { layoutRows, type Block, type ExportDoc } from './model';
 
 const esc = (s: string) => s.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;');
 const br = (s: string) => esc(s).replace(/\n/g, '<br>');

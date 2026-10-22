@@ -8,9 +8,11 @@ service cloud.firestore {
     function isActive() { return hasProfile() && me().active == true; }
     function isAdmin()  { return isActive() && me().role == 'admin'; }
     function readable() {
-      return ['subjects','curriculumNodes','readingFunctions','readingStrategies','textTypes','gagneEvents','ontologyVersions','verbMappings'];
+      // promptTemplates: Phase 9 AI 호출이 교사 브라우저에서 이루어지므로 활성 사용자 읽기 허용
+      return ['subjects','curriculumNodes','readingFunctions','readingStrategies','textTypes','gagneEvents',
+              'ontologyVersions','ontologyFiles','ontologyState','verbMappings','promptTemplates'];
     }
-    function adminWritable() { return readable().concat(['promptTemplates','appConfig']); }
+    function adminWritable() { return readable().concat(['appConfig']); }
 
     // ---------------- 사용자 프로필 (가이드 §6.2 B안: 가입 코드 + 관리자 승인)
     match /users/{uid} {
@@ -34,6 +36,25 @@ service cloud.firestore {
     match /{coll}/{docId=**} {
       allow read: if (isActive() && coll in readable()) || (isAdmin() && coll in adminWritable());
       allow write: if isAdmin() && coll in adminWritable();
+    }
+
+    // ---------------- AI 사용 설정: 하루 한도는 활성 사용자도 읽는다 (가입 코드 appConfig/signup은 관리자만)
+    match /appConfig/ai {
+      allow read: if isActive();
+    }
+
+    // ---------------- AI 사용 횟수 usage/{uid}_{날짜}: 본인만 1씩 늘리기, 관리자는 읽기
+    match /usage/{id} {
+      allow read: if isAdmin() || (isActive() && id.matches(request.auth.uid + '_.*'));
+      allow create: if isActive()
+        && id == request.auth.uid + '_' + request.resource.data.day
+        && request.resource.data.uid == request.auth.uid
+        && request.resource.data.total == 1;
+      allow update: if isActive()
+        && resource.data.uid == request.auth.uid
+        && request.resource.data.uid == resource.data.uid
+        && request.resource.data.day == resource.data.day
+        && request.resource.data.total == resource.data.total + 1;
     }
 
     // ---------------- 교사 산출물: 소유자만 쓰기, 공유된 것은 활성 사용자 모두 읽기

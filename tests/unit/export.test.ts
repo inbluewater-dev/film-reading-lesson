@@ -6,9 +6,9 @@ import { fillPlan } from '../../src/features/lessonplan/generate';
 import { MockProvider } from '../../src/lib/ai/mockProvider';
 import { BUNDLED_SOURCE } from '../../src/lib/catalog/bundled';
 import { Catalog, EMPTY_OVERRIDES } from '../../src/lib/catalog/catalog';
-import { layoutRows, toDocx } from '../../src/lib/export/docx';
+import { toDocx } from '../../src/lib/export/docx';
 import { buildHeader, buildSection, toHwpx } from '../../src/lib/export/hwpx';
-import { buildExportDoc, safeFileName, type ExportDoc } from '../../src/lib/export/model';
+import { buildExportDoc, layoutRows, safeFileName, type ExportDoc } from '../../src/lib/export/model';
 import type { LessonPlanRecord, MaterialRecord } from '../../src/lib/library/types';
 import { buildContext, DEFAULT_PARAMS } from '../../src/lib/lesson/context';
 import { toObjective } from '../../src/lib/lesson/objectives';
@@ -28,7 +28,7 @@ beforeAll(async () => {
   material = { ...owned, subjectId: std.subjectId, nodeIds: [std.id], params: DEFAULT_PARAMS, title: m.title, blocks: m.blocks, glossary: m.glossary, questions: m.comprehensionQuestions, sourceNote: m.sourceNote, standardCodes: [std.standardCode], reviewedByTeacher: true, model: 'mock', promptVersion: 'v1' };
   const objectives = [toObjective(std.standardText)];
   const strategyIds = [cat.reading.strategies.find((s) => s.label === '단어의 나무')!.id];
-  const filled = await fillPlan(cat, ctx, { materialTitle: m.title, materialSummary: '', minutes: 50, strategyIds, objectives });
+  const filled = await fillPlan(new MockProvider(), cat, ctx, { materialTitle: m.title, materialSummary: '', minutes: 50, strategyIds, objectives });
   // 특수 문자·줄바꿈이 깨지지 않는지 함께 본다
   filled.events[0].teacherActivity = '질문 <A> & "B"\n두 번째 줄';
   plan = { ...owned, subjectId: std.subjectId, nodeIds: [std.id], standardCodes: [std.standardCode], materialId: 'm', materialTitle: m.title, strategyIds, lessonMinutes: 50, grade: 2, title: '영화의 특성 수업지도안', objectives, ...filled, reviewedByTeacher: true, model: 'mock' };

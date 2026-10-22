@@ -3,9 +3,7 @@ import { useEffect, useMemo, useRef, useState } from 'react';
 import { useServices } from '../../app/AuthContext';
 import { useCatalog } from '../../app/CatalogContext';
 import { Alert, Button } from '../../components/ui';
-import { toDocx } from '../../lib/export/docx';
 import { toHtml } from '../../lib/export/html';
-import { toHwpx } from '../../lib/export/hwpx';
 import { buildExportDoc, safeFileName } from '../../lib/export/model';
 import { inClaudeHost, saveFile, SaveError } from '../../lib/export/save';
 import type { LessonPlanRecord, MaterialRecord } from '../../lib/library/types';
@@ -47,7 +45,8 @@ export function ExportPanel({ plan }: { plan: LessonPlanRecord }) {
       setBusy(null);
     }
   }
-  const hwpxBlob = () => new Blob([toHwpx(doc) as BlobPart], { type: 'application/hwp+zip' });
+  // 워드·한글 변환 코드는 누를 때만 불러온다 (첫 화면을 가볍게)
+  const hwpxBlob = async () => new Blob([(await import('../../lib/export/hwpx')).toHwpx(doc) as BlobPart], { type: 'application/hwp+zip' });
 
   return (
     <div className="space-y-6">
@@ -74,10 +73,10 @@ export function ExportPanel({ plan }: { plan: LessonPlanRecord }) {
             인쇄 · PDF로 저장
           </Button>
         )}
-        <Button disabled={!!busy} onClick={() => run('docx', async () => ({ name: `${base}.docx`, blob: await toDocx(doc) }), 'DOCX(워드) 파일을 저장했습니다.')}>
+        <Button disabled={!!busy} onClick={() => run('docx', async () => ({ name: `${base}.docx`, blob: await (await import('../../lib/export/docx')).toDocx(doc) }), 'DOCX(워드) 파일을 저장했습니다.')}>
           {busy === 'docx' ? '만드는 중…' : 'DOCX(워드) 받기'}
         </Button>
-        <Button disabled={!!busy} onClick={() => run('hwpx', async () => ({ name: `${base}.hwpx`, blob: hwpxBlob() }), 'HWPX(한글) 파일을 저장했습니다.')}>
+        <Button disabled={!!busy} onClick={() => run('hwpx', async () => ({ name: `${base}.hwpx`, blob: await hwpxBlob() }), 'HWPX(한글) 파일을 저장했습니다.')}>
           {busy === 'hwpx' ? '만드는 중…' : 'HWPX(한글) 받기'}
         </Button>
       </div>
@@ -87,7 +86,7 @@ export function ExportPanel({ plan }: { plan: LessonPlanRecord }) {
           {msg.zipFallback && (
             <span className="mt-2 block">
               실제 사이트에서는 바로 받을 수 있습니다. 지금 확인하려면 ZIP으로 받은 뒤 파일 이름 끝의 “.zip”을 지우면 한글에서 열립니다.{' '}
-              <button type="button" className="font-medium underline" onClick={() => run('hwpx-zip', async () => ({ name: `${base}.hwpx.zip`, blob: hwpxBlob() }), 'ZIP으로 저장했습니다. 이름 끝의 “.zip”을 지운 뒤 한글에서 여세요.')}>
+              <button type="button" className="font-medium underline" onClick={() => run('hwpx-zip', async () => ({ name: `${base}.hwpx.zip`, blob: await hwpxBlob() }), 'ZIP으로 저장했습니다. 이름 끝의 “.zip”을 지운 뒤 한글에서 여세요.')}>
                 ZIP으로 받기
               </button>
             </span>

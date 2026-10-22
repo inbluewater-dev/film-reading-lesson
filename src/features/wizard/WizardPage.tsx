@@ -4,7 +4,7 @@ import { Link } from 'react-router-dom';
 import { useCatalog } from '../../app/CatalogContext';
 import { useDraft } from '../../app/DraftContext';
 import { Alert, Button, errorMessage } from '../../components/ui';
-import { getAi } from '../../lib/ai';
+import { useAi } from '../../app/useAi';
 import { buildContext, subjectsOf } from '../../lib/lesson/context';
 import ConditionsStep from './ConditionsStep';
 import MaterialStep from './MaterialStep';
@@ -18,6 +18,7 @@ export default function WizardPage() {
   const catalog = useCatalog();
   const { draft } = useDraft();
   const [w, patch, reset] = useWizard();
+  const ai = useAi();
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [confirmReset, setConfirmReset] = useState(false);
@@ -41,7 +42,7 @@ export default function WizardPage() {
     try {
       const params = level ? { ...w.params, level } : w.params;
       const label = (id: string) => catalog.textTypes.types.find((t) => t.id === id)?.label ?? id;
-      const material = await getAi().generateMaterial({
+      const material = await ai.generateMaterial({
         context: buildContext(catalog, draft.selectedNodeIds, subjectId),
         params,
         textTypeLabels: { source: label(params.textType.source), structure: label(params.textType.structure), format: label(params.textType.format), content: label(params.textType.content) },

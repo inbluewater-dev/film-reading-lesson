@@ -1,7 +1,15 @@
+import { lazy } from 'react';
 import { HashRouter, MemoryRouter, Navigate, Route, Routes } from 'react-router-dom';
 import { config } from '../lib/config';
 import AccountPage from '../features/account/AccountPage';
 import AdminHome from '../features/admin/AdminHome';
+import AdminLayout from '../features/admin/AdminLayout';
+// 관리자 화면(TTL 처리 등 무거운 코드)은 들어갈 때만 불러온다
+const CurriculumLinksPage = lazy(() => import('../features/admin/CurriculumLinksPage'));
+const OntologyPage = lazy(() => import('../features/admin/OntologyPage'));
+const PromptsPage = lazy(() => import('../features/admin/PromptsPage'));
+const StrategiesPage = lazy(() => import('../features/admin/StrategiesPage'));
+const UsagePage = lazy(() => import('../features/admin/UsagePage'));
 import LoginPage from '../features/auth/LoginPage';
 import PendingPage from '../features/auth/PendingPage';
 import SignupPage from '../features/auth/SignupPage';
@@ -35,7 +43,14 @@ function Routed() {
         <Route path="/library/plan/:id" element={<CatalogGate><PlanDetailPage /></CatalogGate>} />
         <Route path="/shared" element={<SharedPage />} />
         <Route path="/account" element={<AccountPage />} />
-        <Route path="/admin" element={<RequireActive role="admin"><AdminHome /></RequireActive>} />
+        <Route path="/admin" element={<RequireActive role="admin"><AdminLayout /></RequireActive>}>
+          <Route index element={<AdminHome />} />
+          <Route path="curriculum" element={<CatalogGate><CurriculumLinksPage /></CatalogGate>} />
+          <Route path="strategies" element={<CatalogGate><StrategiesPage /></CatalogGate>} />
+          <Route path="ontology" element={<CatalogGate><OntologyPage /></CatalogGate>} />
+          <Route path="prompts" element={<CatalogGate><PromptsPage /></CatalogGate>} />
+          <Route path="usage" element={<UsagePage />} />
+        </Route>
       </Route>
       <Route path="*" element={<Navigate to="/login" replace />} />
     </Routes>

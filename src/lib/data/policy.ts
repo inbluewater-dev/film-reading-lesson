@@ -50,8 +50,9 @@ export function canDeleteUser(a: Actor): boolean {
 }
 
 // ---------------------------------------------------------------- 교육과정·전략 등 공통 데이터
-export const READABLE_COLLECTIONS = ['subjects', 'curriculumNodes', 'readingFunctions', 'readingStrategies', 'textTypes', 'gagneEvents', 'ontologyVersions', 'verbMappings'] as const;
-export const ADMIN_WRITABLE_COLLECTIONS = [...READABLE_COLLECTIONS, 'promptTemplates', 'appConfig'] as const;
+// promptTemplates: 실제 AI 호출(Phase 9)은 교사 브라우저에서 이루어지므로 활성 사용자가 읽을 수 있어야 한다
+export const READABLE_COLLECTIONS = ['subjects', 'curriculumNodes', 'readingFunctions', 'readingStrategies', 'textTypes', 'gagneEvents', 'ontologyVersions', 'ontologyFiles', 'ontologyState', 'verbMappings', 'promptTemplates'] as const;
+export const ADMIN_WRITABLE_COLLECTIONS = [...READABLE_COLLECTIONS, 'appConfig'] as const;
 
 /** 읽기: 활성 사용자는 공통 데이터, 관리자는 appConfig·promptTemplates까지 */
 export function canReadShared(a: Actor, collection: string): boolean {
@@ -60,6 +61,20 @@ export function canReadShared(a: Actor, collection: string): boolean {
 }
 export function canWriteShared(a: Actor, collection: string): boolean {
   return isAdmin(a) && (ADMIN_WRITABLE_COLLECTIONS as readonly string[]).includes(collection);
+}
+
+/** appConfig/ai(하루 한도 등)는 활성 사용자도 읽는다 — 가입 코드(appConfig/signup)는 여전히 관리자만 */
+export function canReadAiSettings(a: Actor): boolean {
+  return isActive(a);
+}
+
+// ---------------------------------------------------------------- usage/{uid}_{날짜} (AI 사용 횟수)
+export function canReadUsage(a: Actor, ownerUid: string): boolean {
+  return isAdmin(a) || (isActive(a) && a!.uid === ownerUid);
+}
+/** 본인 기록만, 횟수는 늘리기만 */
+export function canWriteUsage(a: Actor, ownerUid: string, before: number, after: number): boolean {
+  return isActive(a) && a!.uid === ownerUid && after >= before;
 }
 
 // ---------------------------------------------------------------- materials / lessonPlans (교사 산출물)

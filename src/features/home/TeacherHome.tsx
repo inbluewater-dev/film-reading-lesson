@@ -1,5 +1,6 @@
+import { useEffect, useState } from 'react';
 import { Link, useLocation } from 'react-router-dom';
-import { useAuth } from '../../app/AuthContext';
+import { useAuth, useServices } from '../../app/AuthContext';
 import { useCatalogState } from '../../app/CatalogContext';
 import { useDraft } from '../../app/DraftContext';
 import { Alert } from '../../components/ui';
@@ -10,12 +11,22 @@ export default function TeacherHome() {
   const { draft } = useDraft();
   const notice = (useLocation().state as { notice?: string } | null)?.notice;
   const picked = draft.selectedNodeIds.length;
+  const { usage } = useServices();
+  const [today, setToday] = useState<{ total: number; quota: number | null } | null>(null);
+  useEffect(() => {
+    usage.today().then(setToday, () => setToday(null));
+  }, [usage]);
   return (
     <section className="space-y-8">
       {notice && <Alert>{notice}</Alert>}
       <div>
         <h1 className="text-xl font-bold">{user?.displayName}, 안녕하세요</h1>
         <p className="mt-1 text-stone-600">교육과정에서 출발해 읽기자료 → 독서전략 → 수업지도안 순서로 수업을 만듭니다.</p>
+        {today && today.quota !== null && (
+          <p className="mt-2 text-sm text-stone-600" data-testid="usage-today">
+            오늘 AI 사용 {today.total}회 / 하루 {today.quota}회까지
+          </p>
+        )}
       </div>
       <div className="grid gap-4 sm:grid-cols-2">
         <Link to="/explore" className="rounded-md border border-stone-900 bg-stone-900 p-5 text-white hover:bg-stone-700 focus:outline-none focus:ring-2 focus:ring-amber-600">

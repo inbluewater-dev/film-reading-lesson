@@ -4,7 +4,7 @@ import { Link } from 'react-router-dom';
 import { useCatalog } from '../../app/CatalogContext';
 import { useDraft } from '../../app/DraftContext';
 import { Alert, Button, errorMessage } from '../../components/ui';
-import { getAi } from '../../lib/ai';
+import { useAi } from '../../app/useAi';
 import type { FilmChoice, MaterialParams } from '../../lib/ai/types';
 import { nodeTitle } from '../../lib/catalog/catalog';
 import { buildContext, subjectsOf, unconfirmedFilms } from '../../lib/lesson/context';
@@ -34,6 +34,7 @@ export default function ConditionsStep({ onGenerate }: { onGenerate: () => void 
   const catalog = useCatalog();
   const { draft } = useDraft();
   const [w, patch] = useWizard();
+  const ai = useAi();
   const p = w.params;
   const [filmTitle, setFilmTitle] = useState('');
   const [busy, setBusy] = useState(false);
@@ -58,7 +59,7 @@ export default function ConditionsStep({ onGenerate }: { onGenerate: () => void 
     setError(null);
     setBusy(true);
     try {
-      const r = await getAi().suggestFilms({ context: buildContext(catalog, draft.selectedNodeIds, subjectId), count: 3 });
+      const r = await ai.suggestFilms({ context: buildContext(catalog, draft.selectedNodeIds, subjectId), count: 3 });
       const fresh = r.suggestions.filter((s) => !p.films.some((f) => f.title === s.title)).map((s) => ({ title: s.title, source: 'ai' as const, confirmed: false, reason: `${s.reason} ${s.caution}` }));
       setFilms([...p.films, ...fresh]);
     } catch (e) {

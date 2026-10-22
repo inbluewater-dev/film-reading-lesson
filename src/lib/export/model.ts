@@ -132,6 +132,24 @@ export function buildExportDoc(catalog: Catalog, plan: LessonPlanRecord, materia
   return { title: plan.title, blocks };
 }
 
+/** 병합 정보를 보고 각 칸이 실제로 차지하는 열 위치를 구한다 */
+export function layoutRows(rows: Cell[][], cols: number): { cell: Cell; col: number; span: number }[][] {
+  const occupied: number[] = new Array(cols).fill(0); // 남은 rowSpan
+  return rows.map((row) => {
+    const out: { cell: Cell; col: number; span: number }[] = [];
+    let col = 0;
+    for (const c of row) {
+      while (col < cols && occupied[col] > 0) col++;
+      const span = c.colSpan ?? 1;
+      out.push({ cell: c, col, span });
+      for (let k = 0; k < span; k++) occupied[col + k] = c.rowSpan ?? 1;
+      col += span;
+    }
+    for (let k = 0; k < cols; k++) if (occupied[k] > 0) occupied[k]--;
+    return out;
+  });
+}
+
 /** 파일 이름에 쓸 수 없는 글자를 뺀다 */
 export function safeFileName(s: string): string {
   return s.replace(/[\\/:*?"<>|\n\r\t]/g, ' ').replace(/\s+/g, ' ').trim().slice(0, 80) || '수업지도안';

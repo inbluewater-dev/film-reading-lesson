@@ -1,18 +1,18 @@
 // 지도안 생성: 규칙 기반 뼈대 + AI 문장 채우기 (잠근 칸 유지)
-import { getAi } from '../../lib/ai';
-import type { CurriculumContext } from '../../lib/ai/types';
+import type { AiProvider, CurriculumContext } from '../../lib/ai/types';
 import { READING_PHASE_LABEL, type Catalog } from '../../lib/catalog/catalog';
 import type { LessonEventRow, LessonPlanRecord } from '../../lib/library/types';
 import { applyFill, buildSkeleton } from '../../lib/lesson/plan';
 
 export async function fillPlan(
+  ai: AiProvider,
   catalog: Catalog,
   ctx: CurriculumContext,
   opts: { materialTitle: string; materialSummary: string; minutes: 50 | 100; strategyIds: string[]; objectives: string[]; rows?: LessonEventRow[] },
 ): Promise<Pick<LessonPlanRecord, 'overview' | 'events' | 'rubric' | 'worksheet'>> {
   const rows = opts.rows ?? buildSkeleton(catalog, opts.minutes, opts.strategyIds);
   const label = (id: string) => catalog.strategy(id)?.label ?? id;
-  const result = await getAi().generateLessonPlan({
+  const result = await ai.generateLessonPlan({
     context: ctx,
     materialTitle: opts.materialTitle,
     materialSummary: opts.materialSummary,

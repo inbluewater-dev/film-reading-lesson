@@ -3,7 +3,7 @@ import { useEffect, useMemo, useState } from 'react';
 import { useCatalog } from '../../app/CatalogContext';
 import { useDraft } from '../../app/DraftContext';
 import { Alert, Badge, Button } from '../../components/ui';
-import { getAi } from '../../lib/ai';
+import { useAi } from '../../app/useAi';
 import { READING_PHASE_LABEL, type Catalog } from '../../lib/catalog/catalog';
 import { buildContext } from '../../lib/lesson/context';
 import { recommendStrategies } from '../../lib/lesson/strategies';
@@ -43,6 +43,7 @@ export default function StrategyStep({ onNext }: { onNext: () => void }) {
   const catalog = useCatalog();
   const { draft } = useDraft();
   const [w, patch] = useWizard();
+  const ai = useAi();
   const [reasons, setReasons] = useState<Record<string, string>>({});
   const [openId, setOpenId] = useState<string | null>(null);
 
@@ -63,7 +64,7 @@ export default function StrategyStep({ onNext }: { onNext: () => void }) {
 
   useEffect(() => {
     if (rec.candidates.length === 0) return setReasons({});
-    getAi()
+    ai
       .explainStrategies({
         context: ctx,
         materialTitle: w.material?.title ?? '',

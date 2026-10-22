@@ -4,7 +4,7 @@ import { useServices } from '../../app/AuthContext';
 import { useCatalog } from '../../app/CatalogContext';
 import { useDraft } from '../../app/DraftContext';
 import { Alert, Button, errorMessage } from '../../components/ui';
-import { getAi } from '../../lib/ai';
+import { useAi } from '../../app/useAi';
 import type { LessonPlanRecord } from '../../lib/library/types';
 import { buildContext } from '../../lib/lesson/context';
 import { toObjective } from '../../lib/lesson/objectives';
@@ -18,6 +18,7 @@ export default function PlanStep({ onNext }: { onNext: () => void }) {
   const { library } = useServices();
   const { draft } = useDraft();
   const [w, patch] = useWizard();
+  const ai = useAi();
   const [plan, setPlan] = useState<LessonPlanRecord | null>(null);
   const [busy, setBusy] = useState(false);
   const [msg, setMsg] = useState<{ tone: 'error' | 'success' | 'info'; text: string } | null>(null);
@@ -35,7 +36,7 @@ export default function PlanStep({ onNext }: { onNext: () => void }) {
     setMsg(null);
     try {
       const objectives = ctx.standards.map((s) => toObjective(s.text));
-      const filled = await fillPlan(catalog, ctx, { materialTitle: m.title, materialSummary: summary, minutes: w.params.minutes, strategyIds: w.strategyIds, objectives });
+      const filled = await fillPlan(ai, catalog, ctx, { materialTitle: m.title, materialSummary: summary, minutes: w.params.minutes, strategyIds: w.strategyIds, objectives });
       const rec = await library.lessonPlans.create({
         subjectId: w.subjectId!,
         nodeIds: ctx.nodeIds,
@@ -49,7 +50,7 @@ export default function PlanStep({ onNext }: { onNext: () => void }) {
         objectives,
         ...filled,
         reviewedByTeacher: false,
-        model: getAi().model,
+        model: ai.model,
         ontologyVersion: catalog.ontologyVersion,
       });
       setPlan(rec);
@@ -67,7 +68,7 @@ export default function PlanStep({ onNext }: { onNext: () => void }) {
     setBusy(true);
     setMsg(null);
     try {
-      const filled = await fillPlan(catalog, ctx, { materialTitle: plan.materialTitle, materialSummary: summary, minutes: plan.lessonMinutes, strategyIds: plan.strategyIds, objectives: plan.objectives, rows: plan.events });
+      const filled = await fillPlan(ai, catalog, ctx, { materialTitle: plan.materialTitle, materialSummary: summary, minutes: plan.lessonMinutes, strategyIds: plan.strategyIds, objectives: plan.objectives, rows: plan.events });
       setPlan({ ...plan, ...filled });
       setMsg({ tone: 'info', text: '잠그지 않은 칸을 새로 채웠습니다. 저장하려면 ‘저장’을 누르세요.' });
     } catch (e) {

@@ -91,3 +91,34 @@ describe('자료·지도안·공유', () => {
   });
   it('관리자는 모든 자료 읽기 가능', () => assertSucceeds(getDoc(doc(as('a1'), 'materials/m1'))));
 });
+
+describe('Phase 8: TTL 버전·프롬프트·AI 사용 기록', () => {
+  it('활성 교사는 게시된 TTL 버전·원문·사용 중 버전을 읽는다', async () => {
+    await assertSucceeds(getDoc(doc(as('t1'), 'ontologyFiles/v1')));
+    await assertSucceeds(getDoc(doc(as('t1'), 'ontologyState/active')));
+  });
+  it('교사는 TTL 버전을 게시·변경할 수 없다', async () => {
+    await assertFails(setDoc(doc(as('t1'), 'ontologyState/active'), { versionId: 'x' }));
+    await assertFails(setDoc(doc(as('t1'), 'ontologyFiles/x'), { files: {} }));
+  });
+  it('관리자는 TTL 버전을 게시한다', () => assertSucceeds(setDoc(doc(as('a1'), 'ontologyState/active'), { versionId: 'v2' })));
+  it('교사는 프롬프트를 읽지만 바꿀 수 없다', async () => {
+    await assertSucceeds(getDoc(doc(as('t1'), 'promptTemplates/material')));
+    await assertFails(setDoc(doc(as('t1'), 'promptTemplates/material'), { body: 'x' }));
+  });
+  it('교사는 하루 한도(appConfig/ai)를 읽지만 가입 코드는 못 읽는다', async () => {
+    await assertSucceeds(getDoc(doc(as('t1'), 'appConfig/ai')));
+    await assertFails(getDoc(doc(as('t1'), 'appConfig/signup')));
+    await assertFails(setDoc(doc(as('t1'), 'appConfig/ai'), { dailyQuotaPerTeacher: 999 }));
+  });
+  it('사용 기록: 본인 것만 1부터 시작해 1씩 늘린다', async () => {
+    const rec = { uid: 't1', day: '2026-10-22', counts: { material: 1 }, total: 1 };
+    await assertSucceeds(setDoc(doc(as('t1'), 'usage/t1_2026-10-22'), rec));
+    await assertFails(setDoc(doc(as('t1'), 'usage/t2_2026-10-22'), { ...rec, uid: 't2' }));
+    await assertSucceeds(updateDoc(doc(as('t1'), 'usage/t1_2026-10-22'), { total: 2, counts: { material: 2 } }));
+    await assertFails(updateDoc(doc(as('t1'), 'usage/t1_2026-10-22'), { total: 0 }));
+    await assertSucceeds(getDoc(doc(as('t1'), 'usage/t1_2026-10-22')));
+    await assertFails(getDoc(doc(as('t2'), 'usage/t1_2026-10-22')));
+    await assertSucceeds(getDoc(doc(as('a1'), 'usage/t1_2026-10-22')));
+  });
+});

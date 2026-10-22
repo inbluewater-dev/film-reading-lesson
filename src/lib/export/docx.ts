@@ -1,6 +1,6 @@
 // DOCX 내보내기 — docx 라이브러리로 브라우저에서 바로 만든다 (서버 없음)
 import { AlignmentType, BorderStyle, Document, HeadingLevel, Packer, PageBreak, Paragraph, ShadingType, Table, TableCell, TableRow, TextRun, VerticalAlign, WidthType } from 'docx';
-import type { Block, Cell, ExportDoc } from './model';
+import { layoutRows, type Block, type Cell, type ExportDoc } from './model';
 
 const FONT = { ascii: 'Malgun Gothic', hAnsi: 'Malgun Gothic', eastAsia: '맑은 고딕', cs: 'Malgun Gothic' };
 /** A4(11906×16838 twip), 여백 15mm */
@@ -23,24 +23,6 @@ function cell(c: Cell, widthTwip: number): TableCell {
     shading: c.header ? { type: ShadingType.CLEAR, color: 'auto', fill: 'EEEEEE' } : undefined,
     margins: { top: 60, bottom: 60, left: 90, right: 90 },
     borders: { top: BORDER, bottom: BORDER, left: BORDER, right: BORDER },
-  });
-}
-
-/** 병합 정보를 보고 각 칸이 실제로 차지하는 열 위치를 구한다 */
-export function layoutRows(rows: Cell[][], cols: number): { cell: Cell; col: number; span: number }[][] {
-  const occupied: number[] = new Array(cols).fill(0); // 남은 rowSpan
-  return rows.map((row) => {
-    const out: { cell: Cell; col: number; span: number }[] = [];
-    let col = 0;
-    for (const c of row) {
-      while (col < cols && occupied[col] > 0) col++;
-      const span = c.colSpan ?? 1;
-      out.push({ cell: c, col, span });
-      for (let k = 0; k < span; k++) occupied[col + k] = c.rowSpan ?? 1;
-      col += span;
-    }
-    for (let k = 0; k < cols; k++) if (occupied[k] > 0) occupied[k]--;
-    return out;
   });
 }
 

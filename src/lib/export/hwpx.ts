@@ -1,8 +1,7 @@
 // HWPX(한글) 내보내기 (가이드 §12 Phase 7): 한글 2014 이후가 여는 공개 XML 형식(OWPML)을 브라우저에서 만든다.
 // 빈 문서 뼈대(hwpx-template, NOTICE.md 참고)에 글자·문단 모양과 테두리를 덧붙이고 본문을 새로 쓴다. 구형 .hwp는 만들지 않는다.
 import { strToU8, zipSync } from 'fflate';
-import { layoutRows } from './docx';
-import type { Block, Cell, ExportDoc } from './model';
+import { layoutRows, type Block, type Cell, type ExportDoc } from './model';
 import headerXml from './hwpx-template/header.xml?raw';
 import sectionXml from './hwpx-template/section0.xml?raw';
 import contentHpf from './hwpx-template/content.hpf?raw';
