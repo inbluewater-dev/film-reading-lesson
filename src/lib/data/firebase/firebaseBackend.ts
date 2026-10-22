@@ -1,7 +1,7 @@
 // Firebase 모드 백엔드 (실서비스). 권한은 firebase/firestore.rules가 강제하고, 여기서는 호출만 한다.
 // ⚠ 이 파일은 Claude 작업 환경에서 실제 Firebase에 연결해 시험하지 못했다(네트워크 차단) — Phase 9~10에서 검증.
 import { deleteApp, initializeApp } from 'firebase/app';
-import { initializeAppCheck, ReCaptchaV3Provider } from 'firebase/app-check';
+import { CustomProvider, initializeAppCheck, ReCaptchaV3Provider } from 'firebase/app-check';
 import {
   EmailAuthProvider,
   createUserWithEmailAndPassword,
@@ -44,7 +44,17 @@ export function createFirebaseServices(): Services {
   };
   const app = initializeApp(firebaseConfig);
   // App Check(가이드 §8.1): 사이트 키가 있으면 켠다. 이 앱에서 온 요청만 AI·DB를 쓰게 한다
-  if (env.VITE_RECAPTCHA_SITE_KEY) initializeAppCheck(app, { provider: new ReCaptchaV3Provider(env.VITE_RECAPTCHA_SITE_KEY), isTokenAutoRefreshEnabled: true });
+  // 내 컴퓨터(npm run dev)에서는 콘솔에 등록한 디버그 토큰으로 통과한다 — 배포 빌드에는 절대 들어가지 않음
+  const debugToken = import.meta.env.DEV ? env.VITE_APPCHECK_DEBUG_TOKEN : undefined;
+  if (debugToken) (globalThis as { FIREBASE_APPCHECK_DEBUG_TOKEN?: string }).FIREBASE_APPCHECK_DEBUG_TOKEN = debugToken;
+  if (env.VITE_RECAPTCHA_SITE_KEY || debugToken)
+    initializeAppCheck(app, {
+      // 디버그 토큰만 있을 때는 reCAPTCHA를 불러오지 않는다(디버그 모드가 토큰을 대신 만든다)
+      provider: env.VITE_RECAPTCHA_SITE_KEY
+        ? new ReCaptchaV3Provider(env.VITE_RECAPTCHA_SITE_KEY)
+        : new CustomProvider({ getToken: () => Promise.reject(new Error('App Check: reCAPTCHA 사이트 키가 없습니다.')) }),
+      isTokenAutoRefreshEnabled: true,
+    });
   const auth = getAuth(app);
   const db = getFirestore(app);
   const prompts = createFirebasePrompts(db, auth);
