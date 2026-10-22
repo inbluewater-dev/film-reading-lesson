@@ -1,5 +1,5 @@
 // 지금 만들고 있는 수업(작성 중 초안) — 교사별로 이 브라우저에 자동 임시 저장 (가이드 §13 안정성: localStorage 초안)
-import { createContext, useCallback, useContext, useEffect, useMemo, useState, type ReactNode } from 'react';
+import { createContext, useCallback, useContext, useEffect, useMemo, useRef, useState, type ReactNode } from 'react';
 import { browserStorage } from '../lib/data/local/storage';
 import { useAuth } from './AuthContext';
 
@@ -13,9 +13,11 @@ export interface LessonDraft {
 const EMPTY: LessonDraft = { selectedNodeIds: [] };
 const storage = browserStorage();
 
+type Patch = Partial<LessonDraft> | ((current: LessonDraft) => Partial<LessonDraft>);
 interface DraftState {
   draft: LessonDraft;
-  update: (patch: Partial<LessonDraft>) => void;
+  /** 항상 최신 초안에 덧붙인다 (연달아 호출해도 앞의 변경이 사라지지 않음) */
+  update: (patch: Patch) => void;
   toggleNode: (id: string) => void;
   reset: () => void;
 }
@@ -25,19 +27,27 @@ export function DraftProvider({ children }: { children: ReactNode }) {
   const { user } = useAuth();
   const key = user ? `frl:draft:${user.uid}` : null;
   const [draft, setDraft] = useState<LessonDraft>(EMPTY);
+  const latest = useRef<LessonDraft>(EMPTY);
 
   useEffect(() => {
-    if (!key) return setDraft(EMPTY);
-    try {
-      const raw = storage.get(key);
-      setDraft(raw ? { ...EMPTY, ...(JSON.parse(raw) as LessonDraft) } : EMPTY);
-    } catch {
-      setDraft(EMPTY);
+    let next = EMPTY;
+    if (key) {
+      try {
+        const raw = storage.get(key);
+        if (raw) next = { ...EMPTY, ...(JSON.parse(raw) as LessonDraft) };
+      } catch {
+        /* 손상된 초안은 버린다 */
+      }
     }
+    latest.current = next;
+    setDraft(next);
   }, [key]);
 
   const persist = useCallback(
-    (next: LessonDraft) => {
+    (patch: Patch | 'reset') => {
+      const cur = latest.current;
+      const next = patch === 'reset' ? EMPTY : ({ ...cur, ...(typeof patch === 'function' ? patch(cur) : patch) } as LessonDraft);
+      latest.current = next;
       setDraft(next);
       if (key) storage.set(key, JSON.stringify(next));
     },
@@ -47,10 +57,9 @@ export function DraftProvider({ children }: { children: ReactNode }) {
   const value = useMemo<DraftState>(
     () => ({
       draft,
-      update: (patch) => persist({ ...draft, ...patch } as LessonDraft),
-      toggleNode: (id) =>
-        persist({ ...draft, selectedNodeIds: draft.selectedNodeIds.includes(id) ? draft.selectedNodeIds.filter((x) => x !== id) : [...draft.selectedNodeIds, id] }),
-      reset: () => persist(EMPTY),
+      update: (patch) => persist(patch),
+      toggleNode: (id) => persist((d) => ({ selectedNodeIds: d.selectedNodeIds.includes(id) ? d.selectedNodeIds.filter((x) => x !== id) : [...d.selectedNodeIds, id] })),
+      reset: () => persist('reset'),
     }),
     [draft, persist],
   );

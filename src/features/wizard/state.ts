@@ -45,7 +45,10 @@ export const EMPTY_WIZARD: WizardState = {
 export function useWizard(): [WizardState, (patch: Partial<WizardState>) => void, () => void] {
   const { draft, update } = useDraft();
   const w = { ...EMPTY_WIZARD, ...((draft.wizard as Partial<WizardState>) ?? {}) };
-  const patch = useCallback((p: Partial<WizardState>) => update({ wizard: { ...w, ...p } }), [update, w]);
+  const patch = useCallback(
+    (p: Partial<WizardState>) => update((d) => ({ wizard: { ...EMPTY_WIZARD, ...((d.wizard as Partial<WizardState>) ?? {}), ...p } })),
+    [update],
+  );
   const reset = useCallback(() => update({ wizard: EMPTY_WIZARD }), [update]);
   return [w, patch, reset];
 }
