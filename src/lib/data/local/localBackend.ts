@@ -9,11 +9,13 @@ import {
   MIN_PASSWORD_LENGTH,
   type AdminService,
   type AuthService,
+  type CatalogService,
   type Services,
   type SignUpInput,
   type UserProfile,
   validateSignUp,
 } from '../types';
+import { LocalCatalog } from './localCatalog';
 import type { KeyValueStorage } from './storage';
 
 const STORAGE_KEY = 'frl:local:v1';
@@ -49,6 +51,7 @@ export interface LocalBackendOptions {
 export class LocalBackend implements Services {
   readonly auth: AuthService;
   readonly admin: AdminService;
+  readonly catalog: CatalogService;
   private listeners = new Set<(u: UserProfile | null) => void>();
   private state!: State;
   private ready: Promise<void>;
@@ -72,6 +75,7 @@ export class LocalBackend implements Services {
       getInviteCode: () => this.getInviteCode(),
       setInviteCode: (code) => this.setInviteCode(code),
     };
+    this.catalog = new LocalCatalog(opts.storage, () => this.actor());
   }
 
   /** 초기화(시드 포함)가 끝날 때까지 기다린다 */

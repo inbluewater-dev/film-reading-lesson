@@ -5,7 +5,10 @@ import AdminHome from '../features/admin/AdminHome';
 import LoginPage from '../features/auth/LoginPage';
 import PendingPage from '../features/auth/PendingPage';
 import SignupPage from '../features/auth/SignupPage';
+import ExplorerPage from '../features/curriculum/ExplorerPage';
 import TeacherHome from '../features/home/TeacherHome';
+import { CatalogGate, CatalogProvider } from './CatalogContext';
+import { DraftProvider } from './DraftContext';
 import { AuthProvider, useAuth } from './AuthContext';
 import { RequireActive, RequireSignedIn } from './guards';
 import Layout from './Layout';
@@ -18,8 +21,9 @@ function Routed() {
       <Route path="/login" element={<LoginPage />} />
       <Route path="/signup" element={<SignupPage />} />
       <Route path="/pending" element={<RequireSignedIn><PendingPage /></RequireSignedIn>} />
-      <Route element={<RequireActive><Layout /></RequireActive>}>
+      <Route element={<RequireActive><CatalogProvider><DraftProvider><Layout /></DraftProvider></CatalogProvider></RequireActive>}>
         <Route path="/teacher" element={<TeacherHome />} />
+        <Route path="/explore" element={<CatalogGate><ExplorerPage /></CatalogGate>} />
         <Route path="/account" element={<AccountPage />} />
         <Route path="/admin" element={<RequireActive role="admin"><AdminHome /></RequireActive>} />
       </Route>

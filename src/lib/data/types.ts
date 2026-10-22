@@ -48,9 +48,17 @@ export interface AdminService {
   setInviteCode(code: string): Promise<void>;
 }
 
+/** 교육과정·독서전략 카탈로그 (원문 데이터 + 관리자 입력 연결 정보) */
+export interface CatalogService {
+  load(): Promise<import('../catalog/catalog').Catalog>;
+  /** 관리자 전용: 연결 정보(독서 기능·내용 요소·동사 매핑·전략 보완·읽기 단계) 저장 */
+  saveOverrides(patch: Partial<import('../catalog/catalog').CatalogOverrides>): Promise<void>;
+}
+
 export interface Services {
   auth: AuthService;
   admin: AdminService;
+  catalog: CatalogService;
 }
 
 /** 화면에 그대로 보여줄 수 있는 한국어 메시지를 담은 오류 */
