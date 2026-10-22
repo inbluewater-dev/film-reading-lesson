@@ -40,6 +40,14 @@
 | `VITE_AI_MODE` | `mock` (기본) | 고정 샘플 응답. 인터넷 불필요 |
 | | `gemini` | 실제 AI 생성 (Phase 9) |
 
+## 내보내기 (인쇄·PDF, DOCX, HWPX)
+
+- 수업 만들기 5단계 또는 내 보관함의 지도안에서 내보냅니다. 읽기자료·활동지를 함께 담을지 고를 수 있습니다.
+- **인쇄·PDF**: A4 인쇄 화면이 열리면 ‘PDF로 저장’을 고릅니다.
+- **DOCX**: 맑은 고딕, 표 병합 유지. 워드·한컴오피스·구글 문서에서 열립니다.
+- **HWPX**: 한글 2014 이후에서 열리는 공개 형식(OWPML). 구형 .hwp는 만들지 않습니다. 뼈대 출처는 `src/lib/export/hwpx-template/NOTICE.md`.
+- 점검: `npm test`가 `test-output/export/`에 예시 파일을 만듭니다. `python scripts/check-hwpx.py`(python-hwpx 필요)로 구조를 검사할 수 있고, 최종 확인은 워드·한글에서 직접 엽니다.
+
 ## 명령어
 
 | 명령 | 내용 |

@@ -10,3 +10,4 @@ playwright-report/
 tools/*.key.json
 data/compiled/
 dist-demo/
+test-output/
