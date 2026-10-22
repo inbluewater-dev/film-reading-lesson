@@ -81,7 +81,7 @@ export default function UsagePage() {
           <Button type="submit">저장</Button>
         </form>
         <p className="text-xs text-stone-500">
-          {config.aiMode === 'mock' ? '지금은 샘플(Mock) 모드라 모델 설정은 실제 AI 연결 뒤에 쓰입니다. ' : ''}Flash-Lite는 더 빠르고 가볍지만 글 품질이 조금 낮을 수 있습니다. 무료 등급으로 보낸 내용은 Google 제품 개선에 쓰일 수 있습니다.
+          {config.aiMode === 'mock' ? '지금은 샘플(Mock) 모드라 모델 설정은 실제 AI 연결 뒤에 쓰입니다. ' : ''}무료 등급 한도는 학교 전체(프로젝트)가 함께 쓰며 모델마다 따로 셉니다 — 측정값 기준 Flash는 분당 5·하루 20회, Flash-Lite는 분당 15·하루 500회(매일 오후 4~5시 초기화). 고른 모델의 한도가 차면 다른 모델로 자동으로 넘어갑니다. Flash-Lite는 글 품질이 조금 낮을 수 있습니다. 무료 등급으로 보낸 내용은 Google 제품 개선에 쓰일 수 있습니다.
         </p>
       </section>
 

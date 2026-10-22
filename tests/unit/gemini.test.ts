@@ -96,9 +96,16 @@ describe('붐빔·일시 장애', () => {
     expect(c.model).toBe('gemini-3.6-flash');
   });
   it('모든 모델이 붐비면 붐빔 안내', async () => {
-    const { c, calls } = core([busy(), busy(), busy(), busy(), busy(), busy()]);
+    const { c, calls } = core(Array.from({ length: 8 }, busy));
     await expect(c.suggestFilms({ context: ctx, count: 3 })).rejects.toThrow('AI 서버가 지금 붐빕니다');
-    expect(calls).toHaveLength(6);
+    expect(calls).toHaveLength(8);
+  });
+  it('한도(429)가 찬 모델은 다시 부르지 않고 바로 다음 모델로', async () => {
+    const quota = () => new Error('[429 ] You exceeded your current quota, please check your plan and billing details');
+    const { c, calls } = core([quota(), quota(), ok], { model: 'gemini-3.6-flash' });
+    await c.suggestFilms({ context: ctx, count: 3 });
+    expect(calls.map((x) => x.model)).toEqual(['gemini-3.6-flash', 'gemini-3.5-flash-lite', 'gemini-3.1-flash-lite']);
+    expect(c.model).toBe('gemini-3.1-flash-lite');
   });
 });
 
@@ -119,9 +126,14 @@ describe('오류 안내', () => {
   it('“generateContent”라는 말만으로 사용량 초과로 오인하지 않는다', () => {
     expect(aiError(new Error('models/gemini-3.8-flash:generateContent: [400] Bad Request')).message).toContain('응답하지 못했습니다');
   });
-  it('호출 실패는 재시도하지 않고 바로 안내한다', async () => {
-    const { c, calls } = core([new Error('429 quota')]);
+  it('모든 모델의 한도가 차면 사용량 안내', async () => {
+    const { c, calls } = core(Array.from({ length: 4 }, () => new Error('429 quota')));
     await expect(c.suggestFilms({ context: ctx, count: 3 })).rejects.toThrow('무료 사용량');
+    expect(calls).toHaveLength(4);
+  });
+  it('권한 오류는 재시도하지 않고 바로 안내한다', async () => {
+    const { c, calls } = core([new Error('[401] Firebase App Check token is invalid')]);
+    await expect(c.suggestFilms({ context: ctx, count: 3 })).rejects.toThrow('App Check');
     expect(calls).toHaveLength(1);
   });
 });
