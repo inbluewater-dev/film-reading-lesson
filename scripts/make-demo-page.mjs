@@ -4,7 +4,8 @@ import { readFileSync, writeFileSync } from 'node:fs';
 
 const html = readFileSync('dist-demo/index.html', 'utf-8');
 const styles = [...html.matchAll(/<style[^>]*>[\s\S]*?<\/style>/g)].map((m) => m[0]);
-const scripts = [...html.matchAll(/<script[^>]*>[\s\S]*?<\/script>/g)].map((m) => m[0]);
+// 번들 속 문자열 리터럴의 U+FFFD(대체 문자)는 \uFFFD 이스케이프로 바꾼다(게시 검사에서 깨진 글자로 오인되지 않게)
+const scripts = [...html.matchAll(/<script[^>]*>[\s\S]*?<\/script>/g)].map((m) => m[0].replace(/\uFFFD/g, '\\uFFFD'));
 if (!styles.length || !scripts.length) throw new Error('style/script를 찾지 못했습니다');
 const page = [
   '<title>영화 수업 설계 도우미</title>',
