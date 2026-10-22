@@ -19,6 +19,7 @@ function core(responses: (string | Error)[], opts: { model?: string; template?: 
   const c = new GeminiCore({
     model: async () => opts.model ?? DEFAULT_MODEL,
     template: async () => opts.template ?? '',
+    sleep: async () => undefined,
     generate: async (i) => {
       calls.push(i);
       const r = responses.shift();
@@ -76,6 +77,28 @@ describe('생성·검증', () => {
     const { c } = core([JSON.stringify({ ...sample, events: [...sample.events].reverse() })]);
     const r = await c.generateLessonPlan({ context: ctx, materialTitle: 't', materialSummary: '', minutes: 50, objectives: [], strategies: [], events });
     expect(r.events.map((e) => e.seq)).toEqual([1, 2, 3, 4, 5, 6, 7, 8, 9]);
+  });
+});
+
+describe('붐빔·일시 장애', () => {
+  const busy = () => new Error('[500 ] This model is currently experiencing high demand. Spikes in demand are usually temporary.');
+  const ok = JSON.stringify({ suggestions: [{ title: 'A', reason: 'r', caution: '확인 필요' }] });
+  it('같은 모델로 한 번 더 시도한다', async () => {
+    const { c, calls } = core([busy(), ok]);
+    await c.suggestFilms({ context: ctx, count: 3 });
+    expect(calls.map((x) => x.model)).toEqual([DEFAULT_MODEL, DEFAULT_MODEL]);
+    expect(c.model).toBe(DEFAULT_MODEL);
+  });
+  it('계속 붐비면 다음 모델로 넘어가고, 쓴 모델을 기록한다', async () => {
+    const { c, calls } = core([busy(), busy(), ok]);
+    await c.suggestFilms({ context: ctx, count: 3 });
+    expect(calls.map((x) => x.model)).toEqual([DEFAULT_MODEL, DEFAULT_MODEL, 'gemini-3.6-flash']);
+    expect(c.model).toBe('gemini-3.6-flash');
+  });
+  it('모든 모델이 붐비면 붐빔 안내', async () => {
+    const { c, calls } = core([busy(), busy(), busy(), busy(), busy(), busy()]);
+    await expect(c.suggestFilms({ context: ctx, count: 3 })).rejects.toThrow('AI 서버가 지금 붐빕니다');
+    expect(calls).toHaveLength(6);
   });
 });
 
