@@ -33,7 +33,7 @@ export interface GeminiDeps {
  * 고른 모델이 붐비거나 한도가 찼을 때 차례로 써 볼 모델 (2026-10 무료 등급 안정 모델).
  * 무료 등급 한도는 프로젝트·모델별로 따로 센다(측정값: Flash 분당 5·하루 20회, Flash-Lite 분당 15·하루 500회).
  */
-export const FALLBACK_MODELS = ['gemini-3.6-flash', 'gemini-3.5-flash-lite', 'gemini-3.1-flash-lite'];
+export const FALLBACK_MODELS = ['gemini-3.5-flash-lite', 'gemini-3.1-flash-lite', 'gemini-3.6-flash'];
 
 /** 이 모델의 사용 한도가 찬 경우 — 다른 모델은 한도가 따로라 넘어가 본다 */
 export function isQuota(e: unknown): boolean {
@@ -47,7 +47,8 @@ export function isTransient(e: unknown): boolean {
   return /\b(500|502|503|504)\b|UNAVAILABLE|overloaded|high demand|INTERNAL|DEADLINE_EXCEEDED/i.test(msg);
 }
 
-export const DEFAULT_MODEL = 'gemini-3.8-flash';
+// 2026-10-23 사용자 결정: 무료 등급 + Flash-Lite 기본 (Flash는 무료 한도가 하루 20회 수준이라 학교 단위로 부족)
+export const DEFAULT_MODEL = 'gemini-3.5-flash-lite';
 export const AI_NOTE = 'AI 생성 자료입니다. 사용 전 교사가 사실·범위·표현을 검토하세요.';
 const FILM_CAUTION = '제목·감독·연도 등 사실 정보를 반드시 확인한 뒤 쓰세요.';
 
