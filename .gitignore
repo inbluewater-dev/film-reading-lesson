@@ -11,4 +11,5 @@ playwright-report/
 tools/*.key.json
 data/compiled/
 dist-demo/
+dist-hosting/
 test-output/
