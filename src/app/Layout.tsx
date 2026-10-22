@@ -17,6 +17,18 @@ export default function Layout() {
             <NavLink to="/teacher" className={link}>
               홈
             </NavLink>
+            <NavLink to="/explore" className={link}>
+              교육과정 탐색
+            </NavLink>
+            <NavLink to="/lesson" className={link}>
+              수업 만들기
+            </NavLink>
+            <NavLink to="/library" className={link}>
+              내 보관함
+            </NavLink>
+            <NavLink to="/shared" className={link}>
+              공유 보관함
+            </NavLink>
             {user?.role === 'admin' && (
               <NavLink to="/admin" className={link}>
                 관리자

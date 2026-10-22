@@ -3,7 +3,7 @@ export default {
   content: ['./index.html', './src/**/*.{ts,tsx}'],
   theme: {
     extend: {
-      fontFamily: { sans: ['Pretendard', '"Noto Sans KR"', '"Noto Sans CJK KR"', 'system-ui', 'sans-serif'] },
+      fontFamily: { sans: ['"Noto Sans KR"', 'Pretendard', '"Noto Sans CJK KR"', '"Malgun Gothic"', 'system-ui', 'sans-serif'] },
     },
   },
   plugins: [],

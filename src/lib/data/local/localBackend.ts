@@ -4,16 +4,31 @@
 import * as policy from '../policy';
 import {
   AppError,
+  DEFAULT_DAILY_QUOTA,
   INVITE_CODE_PATTERN,
   LOGIN_ID_PATTERN,
   MIN_PASSWORD_LENGTH,
   type AdminService,
+  type AiSettings,
   type AuthService,
+  type CatalogService,
+  type CreateUserInput,
+  type PromptService,
   type Services,
   type SignUpInput,
+  type UsageKind,
+  type UsageRecord,
+  type UsageService,
   type UserProfile,
+  validateAiSettings,
   validateSignUp,
 } from '../types';
+import type { LessonPlanRecord, LibraryService, MaterialRecord } from '../../library/types';
+import { sha256Hex } from '../../util/hash';
+import { sha256Fallback } from '../../util/sha256Fallback';
+import { LocalCatalog } from './localCatalog';
+import { LocalPrompts } from './localPrompts';
+import { LocalOwnedStore } from './localOwnedStore';
 import type { KeyValueStorage } from './storage';
 
 const STORAGE_KEY = 'frl:local:v1';
@@ -27,8 +42,10 @@ interface State {
   version: 1;
   users: Record<string, UserProfile & { inviteCode?: string }>;
   credentials: Record<string, Credential>; // loginId → 비밀번호 해시
-  appConfig: { signup: { inviteCode: string } };
+  appConfig: { signup: { inviteCode: string }; ai?: AiSettings };
   sessionUid: string | null;
+  /** AI 사용 횟수: "uid_날짜" → 기록 */
+  usage?: Record<string, UsageRecord>;
 }
 
 /** 로컬 모드 테스트 계정 — README에 안내. 실서비스와 같은 비밀번호를 쓰지 말 것 */
@@ -49,6 +66,10 @@ export interface LocalBackendOptions {
 export class LocalBackend implements Services {
   readonly auth: AuthService;
   readonly admin: AdminService;
+  readonly catalog: CatalogService;
+  readonly library: LibraryService;
+  readonly prompts: PromptService;
+  readonly usage: UsageService;
   private listeners = new Set<(u: UserProfile | null) => void>();
   private state!: State;
   private ready: Promise<void>;
@@ -71,6 +92,21 @@ export class LocalBackend implements Services {
       setActive: (uid, active) => this.setActive(uid, active),
       getInviteCode: () => this.getInviteCode(),
       setInviteCode: (code) => this.setInviteCode(code),
+      createUser: (input) => this.createUser(input),
+      resetPassword: (uid, pw) => this.resetPassword(uid, pw),
+      getAiSettings: () => this.getAiSettings(),
+      setAiSettings: (v) => this.setAiSettings(v),
+      listUsage: () => this.listUsage(),
+    };
+    const me = () => (this.state?.sessionUid ? this.state.users[this.state.sessionUid] ?? null : null);
+    const now = () => this.nowIso();
+    const id = () => this.newId();
+    this.catalog = new LocalCatalog(opts.storage, () => this.actor(), me, now, id);
+    this.prompts = new LocalPrompts(opts.storage, () => this.actor(), now);
+    this.usage = { record: (k) => this.recordUsage(k), today: () => this.todayUsage() };
+    this.library = {
+      materials: new LocalOwnedStore<MaterialRecord>(opts.storage, 'frl:local:materials:v1', me, now, id),
+      lessonPlans: new LocalOwnedStore<LessonPlanRecord>(opts.storage, 'frl:local:lessonPlans:v1', me, now, id),
     };
   }
 
@@ -120,7 +156,7 @@ export class LocalBackend implements Services {
     return (this.opts.now?.() ?? new Date()).toISOString();
   }
   private newId() {
-    return this.opts.newId?.() ?? crypto.randomUUID();
+    return this.opts.newId?.() ?? randomId();
   }
 
   private actor(): policy.Actor {
@@ -269,17 +305,109 @@ export class LocalBackend implements Services {
     this.state.appConfig.signup.inviteCode = c;
     this.save();
   }
+
+  // ------------------------------------------------------------ 계정 직접 발급·비밀번호 재설정 (가이드 §9.3-1)
+  private async createUser(input: CreateUserInput): Promise<UserProfile> {
+    await this.ready;
+    if (!policy.isAdmin(this.actor())) throw new AppError('permission-denied', '관리자만 계정을 만들 수 있습니다.');
+    const clean = { loginId: input.loginId.trim(), displayName: input.displayName.trim(), password: input.password };
+    validateSignUp({ ...clean, inviteCode: 'admin-issued' });
+    if (this.state.credentials[clean.loginId]) throw new AppError('login-id-taken', `이미 사용 중인 아이디입니다: ${clean.loginId}`);
+    const uid = this.newId();
+    const profile: UserProfile = {
+      uid,
+      loginId: clean.loginId,
+      displayName: clean.displayName,
+      role: 'teacher',
+      active: true,
+      status: 'approved',
+      createdAt: this.nowIso(),
+      approvedAt: this.nowIso(),
+      approvedBy: this.actor()!.uid,
+    };
+    if (!policy.canCreateUser(this.actor(), uid, profile, this.state.appConfig.signup.inviteCode)) throw new AppError('permission-denied', '권한이 없습니다.');
+    this.state.users[uid] = profile;
+    this.state.credentials[clean.loginId] = await makeCredential(uid, clean.password);
+    this.save();
+    return this.publicProfile(profile);
+  }
+
+  private async resetPassword(uid: string, newPassword: string): Promise<void> {
+    await this.ready;
+    if (!policy.isAdmin(this.actor())) throw new AppError('permission-denied', '관리자만 비밀번호를 재설정할 수 있습니다.');
+    const u = this.state.users[uid];
+    if (!u) throw new AppError('not-found', '사용자를 찾을 수 없습니다.');
+    if (newPassword.length < MIN_PASSWORD_LENGTH) throw new AppError('weak-password', `비밀번호는 ${MIN_PASSWORD_LENGTH}자 이상입니다.`);
+    this.state.credentials[u.loginId] = await makeCredential(uid, newPassword);
+    this.save();
+  }
+
+  // ------------------------------------------------------------ AI 사용 설정·사용 현황 (가이드 §9.3-7)
+  private async getAiSettings(): Promise<AiSettings> {
+    await this.ready;
+    if (!policy.canReadAiSettings(this.actor())) throw new AppError('permission-denied', '승인된 계정만 볼 수 있습니다.');
+    return { dailyQuotaPerTeacher: DEFAULT_DAILY_QUOTA, model: null, ...this.state.appConfig.ai };
+  }
+
+  private async setAiSettings(v: AiSettings): Promise<void> {
+    await this.ready;
+    if (!policy.canWriteShared(this.actor(), 'appConfig')) throw new AppError('permission-denied', '관리자만 바꿀 수 있습니다.');
+    validateAiSettings(v);
+    this.state.appConfig.ai = { ...this.state.appConfig.ai, dailyQuotaPerTeacher: v.dailyQuotaPerTeacher, ...(v.model !== undefined ? { model: v.model || null } : {}) };
+    this.save();
+  }
+
+  private today() {
+    const d = this.opts.now?.() ?? new Date();
+    // 한국 시간 기준 날짜
+    return new Date(d.getTime() + 9 * 3600_000).toISOString().slice(0, 10);
+  }
+
+  private async todayUsage(): Promise<{ total: number; quota: number | null }> {
+    await this.ready;
+    const a = this.actor();
+    if (!a || !policy.canReadUsage(a, a.uid)) throw new AppError('permission-denied', '로그인이 필요합니다.');
+    const rec = this.state.usage?.[`${a.uid}_${this.today()}`];
+    const ai = this.state.appConfig.ai;
+    return { total: rec?.total ?? 0, quota: ai && 'dailyQuotaPerTeacher' in ai ? ai.dailyQuotaPerTeacher : DEFAULT_DAILY_QUOTA };
+  }
+
+  private async recordUsage(kind: UsageKind): Promise<void> {
+    const { total, quota } = await this.todayUsage();
+    const a = this.actor()!;
+    if (quota !== null && total >= quota) throw new AppError('quota-exceeded', `오늘 AI 생성 한도(${quota}회)를 모두 썼습니다. 내일 다시 이용하거나 관리자에게 문의하세요.`);
+    const key = `${a.uid}_${this.today()}`;
+    const before = this.state.usage?.[key] ?? { uid: a.uid, day: this.today(), counts: {}, total: 0 };
+    const after: UsageRecord = { ...before, counts: { ...before.counts, [kind]: (before.counts[kind] ?? 0) + 1 }, total: before.total + 1 };
+    if (!policy.canWriteUsage(a, a.uid, before.total, after.total)) throw new AppError('permission-denied', '권한이 없습니다.');
+    this.state.usage = { ...this.state.usage, [key]: after };
+    this.save();
+  }
+
+  private async listUsage(): Promise<UsageRecord[]> {
+    await this.ready;
+    if (!policy.isAdmin(this.actor())) throw new AppError('permission-denied', '관리자만 볼 수 있습니다.');
+    return Object.values(this.state.usage ?? {}).sort((x, y) => y.day.localeCompare(x.day) || x.uid.localeCompare(y.uid));
+  }
 }
 
 // ------------------------------------------------------------ 비밀번호 해시 (로컬 모드 전용)
-async function sha256(text: string): Promise<string> {
-  const buf = await crypto.subtle.digest('SHA-256', new TextEncoder().encode(text));
-  return [...new Uint8Array(buf)].map((b) => b.toString(16).padStart(2, '0')).join('');
+// 일부 내장 화면(보안 컨텍스트가 아닌 프레임)에는 crypto.subtle이 없으므로 순수 JS 대체 구현을 둔다.
+const sha256 = sha256Hex;
+function randomId(): string {
+  const c = globalThis.crypto;
+  if (c?.randomUUID) return c.randomUUID();
+  const bytes = new Uint8Array(16);
+  if (c?.getRandomValues) c.getRandomValues(bytes);
+  else for (let i = 0; i < 16; i++) bytes[i] = Math.floor(Math.random() * 256);
+  return [...bytes].map((b) => b.toString(16).padStart(2, '0')).join('');
 }
 async function makeCredential(uid: string, password: string): Promise<Credential> {
-  const salt = crypto.randomUUID();
+  const salt = randomId();
   return { uid, salt, hash: await sha256(salt + password) };
 }
 async function verifyCredential(c: Credential, password: string): Promise<boolean> {
   return (await sha256(c.salt + password)) === c.hash;
 }
+
+export { sha256Fallback };

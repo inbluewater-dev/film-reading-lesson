@@ -68,6 +68,7 @@ export const ReadingStrategy = z.object({
   recommendedEvents: z.array(z.number().int().min(1).max(9)),
   minutes: z.number().int().positive().nullable(),
   reviewStatus: z.enum(['draft', 'reviewed']),
+  worksheetHint: z.string(),
 });
 export const ReadingData = z.object({
   functions: z.array(ReadingFunction),

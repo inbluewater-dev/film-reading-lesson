@@ -1,7 +1,10 @@
+// 관리자 › 계정 (가이드 §9.3-1): 가입 신청 승인·거절, 목록, 직접 발급(단건/CSV), 비활성화, 비밀번호 재설정, 가입 코드
 import { useCallback, useEffect, useState, type FormEvent } from 'react';
 import { useServices } from '../../app/AuthContext';
 import { Alert, Badge, Button, Field, errorMessage } from '../../components/ui';
+import { config } from '../../lib/config';
 import type { UserProfile } from '../../lib/data/types';
+import { CreateUsers } from './CreateUsers';
 
 const fmt = (iso?: string) => (iso ? new Date(iso).toLocaleString('ko-KR', { dateStyle: 'short', timeStyle: 'short' }) : '—');
 
@@ -13,6 +16,7 @@ export default function AdminHome() {
   const [newCode, setNewCode] = useState('');
   const [msg, setMsg] = useState<{ tone: 'error' | 'success'; text: string } | null>(null);
   const [rejecting, setRejecting] = useState<{ uid: string; reason: string } | null>(null);
+  const [resetting, setResetting] = useState<{ uid: string; password: string } | null>(null);
 
   const reload = useCallback(async () => {
     try {
@@ -48,7 +52,6 @@ export default function AdminHome() {
 
   return (
     <div className="space-y-10">
-      <h1 className="text-xl font-bold">관리자</h1>
       {msg && <Alert tone={msg.tone}>{msg.text}</Alert>}
 
       <section aria-labelledby="pending-h">
@@ -121,7 +124,34 @@ export default function AdminHome() {
                     {u.status === 'rejected' ? <Badge tone="red">거절됨</Badge> : u.active ? <Badge tone="green">사용 중</Badge> : <Badge tone="stone">중지</Badge>}
                   </td>
                   <td className="px-4 py-2 text-stone-600">{fmt(u.lastLoginAt)}</td>
-                  <td className="px-4 py-2 text-right">
+                  <td className="space-x-2 whitespace-nowrap px-4 py-2 text-right">
+                    {config.dataMode === 'local' && u.status === 'approved' && resetting?.uid !== u.uid && (
+                      <Button variant="ghost" onClick={() => setResetting({ uid: u.uid, password: '' })}>
+                        비밀번호 재설정
+                      </Button>
+                    )}
+                    {resetting?.uid === u.uid && (
+                      <span className="inline-flex items-center gap-2">
+                        <input
+                          aria-label={`${u.loginId} 새 비밀번호`}
+                          placeholder="새 비밀번호(8자 이상)"
+                          value={resetting.password}
+                          onChange={(e) => setResetting({ uid: u.uid, password: e.target.value })}
+                          className="w-44 rounded-md border border-stone-300 px-2 py-1.5 text-sm"
+                        />
+                        <Button
+                          onClick={async () => {
+                            await run(() => admin.resetPassword(u.uid, resetting.password), `${u.displayName}(${u.loginId})의 비밀번호를 바꿨습니다. 새 비밀번호를 직접 전달하세요.`)();
+                            setResetting(null);
+                          }}
+                        >
+                          바꾸기
+                        </Button>
+                        <Button variant="ghost" onClick={() => setResetting(null)}>
+                          취소
+                        </Button>
+                      </span>
+                    )}
                     {u.uid !== me?.uid && u.status === 'approved' && (
                       <Button variant="secondary" onClick={run(() => admin.setActive(u.uid, !u.active), u.active ? `${u.displayName}(${u.loginId}) 계정의 사용을 중지했습니다.` : `${u.displayName}(${u.loginId}) 계정을 다시 사용할 수 있게 했습니다.`)}>
                         {u.active ? '사용 중지' : '다시 사용'}
@@ -138,8 +168,14 @@ export default function AdminHome() {
             </tbody>
           </table>
         </div>
-        <p className="mt-2 text-xs text-stone-500">비밀번호 재설정은 관리자 도구로 처리합니다(Phase 8에서 안내).</p>
+        <p className="mt-2 text-xs text-stone-500">
+          {config.dataMode === 'local'
+            ? '로컬 모드에서는 화면에서 비밀번호를 재설정합니다.'
+            : '비밀번호 재설정: 다른 사람의 비밀번호는 화면에서 바꿀 수 없습니다. 관리자 PC에서 node tools/admin-cli.mjs reset-password <아이디> <새 비밀번호> 를 실행하세요(README 참고).'}
+        </p>
       </section>
+
+      <CreateUsers onCreated={reload} />
 
       <section aria-labelledby="code-h" className="max-w-md">
         <h2 id="code-h" className="text-lg font-semibold">가입 코드</h2>

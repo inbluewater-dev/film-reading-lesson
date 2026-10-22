@@ -1,6 +1,7 @@
 // Firebase 모드 백엔드 (실서비스). 권한은 firebase/firestore.rules가 강제하고, 여기서는 호출만 한다.
 // ⚠ 이 파일은 Claude 작업 환경에서 실제 Firebase에 연결해 시험하지 못했다(네트워크 차단) — Phase 9~10에서 검증.
-import { initializeApp } from 'firebase/app';
+import { deleteApp, initializeApp } from 'firebase/app';
+import { initializeAppCheck, ReCaptchaV3Provider } from 'firebase/app-check';
 import {
   EmailAuthProvider,
   createUserWithEmailAndPassword,
@@ -19,21 +20,35 @@ import {
   LOGIN_ID_PATTERN,
   MIN_PASSWORD_LENGTH,
   type Services,
+  type UsageRecord,
   type UserProfile,
   toInternalEmail,
+  validateAiSettings,
   validateSignUp,
 } from '../types';
+import type { LessonPlanRecord, MaterialRecord } from '../../library/types';
+import { createFirebaseCatalog } from './firebaseCatalog';
+import { createFirebasePrompts, createFirebaseUsage, readAiSettings } from './firebaseExtras';
+import { config } from '../../config';
+import { registerAi } from '../../ai';
+import { createGeminiProvider } from '../../ai/geminiProvider';
+import { createFirebaseOwnedStore } from './firebaseOwnedStore';
 
 export function createFirebaseServices(): Services {
   const env = import.meta.env;
-  const app = initializeApp({
+  const firebaseConfig = {
     apiKey: env.VITE_FIREBASE_API_KEY,
     authDomain: env.VITE_FIREBASE_AUTH_DOMAIN,
     projectId: env.VITE_FIREBASE_PROJECT_ID,
     appId: env.VITE_FIREBASE_APP_ID,
-  });
+  };
+  const app = initializeApp(firebaseConfig);
+  // App Check(가이드 §8.1): 사이트 키가 있으면 켠다. 이 앱에서 온 요청만 AI·DB를 쓰게 한다
+  if (env.VITE_RECAPTCHA_SITE_KEY) initializeAppCheck(app, { provider: new ReCaptchaV3Provider(env.VITE_RECAPTCHA_SITE_KEY), isTokenAutoRefreshEnabled: true });
   const auth = getAuth(app);
   const db = getFirestore(app);
+  const prompts = createFirebasePrompts(db, auth);
+  if (config.aiMode === 'gemini') registerAi(createGeminiProvider(app, () => readAiSettings(db), prompts));
   let current: UserProfile | null = null;
   const listeners = new Set<(u: UserProfile | null) => void>();
 
@@ -67,6 +82,13 @@ export function createFirebaseServices(): Services {
   };
 
   return {
+    catalog: createFirebaseCatalog(db, auth, () => current),
+    prompts,
+    usage: createFirebaseUsage(db, auth),
+    library: {
+      materials: createFirebaseOwnedStore<MaterialRecord>(db, auth, 'materials', () => current),
+      lessonPlans: createFirebaseOwnedStore<LessonPlanRecord>(db, auth, 'lessonPlans', () => current),
+    },
     auth: {
       async signIn(loginId, password) {
         if (!LOGIN_ID_PATTERN.test(loginId)) throw new AppError('invalid-login-id', '아이디는 영어 소문자와 숫자 4~20자입니다.');
@@ -151,6 +173,33 @@ export function createFirebaseServices(): Services {
         const c = code.trim();
         if (!INVITE_CODE_PATTERN.test(c)) throw new AppError('invalid-input', '가입 코드는 공백 없이 4~32자로 정하세요.');
         await setDoc(doc(db, 'appConfig', 'signup'), { inviteCode: c }, { merge: true }).catch(mapAuthError);
+      },
+      async createUser(input) {
+        // 관리자 세션을 유지하려고 보조 앱 인스턴스로 계정을 만든다 (가이드 §6.2)
+        const clean = { loginId: input.loginId.trim(), displayName: input.displayName.trim(), password: input.password };
+        validateSignUp({ ...clean, inviteCode: 'admin-issued' });
+        const secondary = initializeApp(firebaseConfig, `create-${Date.now()}`);
+        try {
+          const cred = await createUserWithEmailAndPassword(getAuth(secondary), toInternalEmail(clean.loginId), clean.password).catch(mapAuthError);
+          const now = new Date().toISOString();
+          const profile = { loginId: clean.loginId, displayName: clean.displayName, role: 'teacher' as const, active: true, status: 'approved' as const, createdAt: now, approvedAt: now, approvedBy: requireMe().uid };
+          await setDoc(doc(db, 'users', cred.user.uid), profile).catch(mapAuthError);
+          return { ...profile, uid: cred.user.uid };
+        } finally {
+          await deleteApp(secondary).catch(() => undefined);
+        }
+      },
+      async resetPassword() {
+        throw new AppError('unavailable', 'Firebase 모드에서는 다른 사람의 비밀번호를 화면에서 바꿀 수 없습니다. 관리자 PC에서 tools/admin-cli.mjs로 재설정하세요(README 참고).');
+      },
+      getAiSettings: () => readAiSettings(db).catch(mapAuthError),
+      async setAiSettings(v) {
+        validateAiSettings(v);
+        await setDoc(doc(db, 'appConfig', 'ai'), { dailyQuotaPerTeacher: v.dailyQuotaPerTeacher, ...(v.model !== undefined ? { model: v.model || null } : {}) }, { merge: true }).catch(mapAuthError);
+      },
+      async listUsage() {
+        const snap = await getDocs(collection(db, 'usage')).catch(mapAuthError);
+        return snap.docs.map((d) => d.data() as UsageRecord).sort((x, y) => y.day.localeCompare(x.day) || x.uid.localeCompare(y.uid));
       },
     },
   };

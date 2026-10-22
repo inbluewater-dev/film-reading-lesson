@@ -18,10 +18,11 @@ const sources = Object.entries(SOURCE_FILES).map(([key, file]) => {
 });
 const graph = (k: SourceKey) => sources.find((s) => s.key === k)!.graph;
 
+const gagne = compileGagne(graph('gagne'));
 const outputs: [string, ZodTypeAny, unknown][] = [
   ['curriculum.json', S.CurriculumData, compileCurriculum(graph('curriculum'))],
-  ['reading.json', S.ReadingData, compileReading(graph('reading'))],
-  ['gagne.json', S.GagneData, compileGagne(graph('gagne'))],
+  ['reading.json', S.ReadingData, compileReading(graph('reading'), gagne.events)],
+  ['gagne.json', S.GagneData, gagne],
   ['textTypes.json', S.TextData, compileText(graph('text'))],
 ];
 
@@ -46,5 +47,7 @@ const manifest = S.Manifest.parse({
 mkdirSync(OUT, { recursive: true });
 for (const [file, , data] of outputs) writeFileSync(join(OUT, file), JSON.stringify(data, null, 2) + '\n');
 writeFileSync(join(OUT, 'manifest.json'), JSON.stringify(manifest, null, 2) + '\n');
+// 관리자 화면(TTL 비교·내보내기)이 쓰는 원문 TTL 묶음 (작업본 우선 규칙을 그대로 따름)
+writeFileSync(join(OUT, 'sources.json'), JSON.stringify(Object.fromEntries(sources.map((s) => [s.key, s.text]))) + '\n');
 console.log(`✓ 컴파일 완료 (ontologyVersion ${ontologyVersion})`);
 for (const s of sources) console.log(`  ${s.file}${s.origin === 'working' ? ' (작업본)' : ''}: ${s.graph.size} triples`);

@@ -75,7 +75,10 @@ export function compileCurriculum(g: Graph): CurriculumData {
 }
 
 // ---------------------------------------------------------------- 독서 기능·동사·전략
-export function compileReading(g: Graph): ReadingData {
+/**
+ * @param gagneEvents 가네 사태 IRI → 순서 번호 (rs:recommendedEvent 해석용). 없으면 권장 사태를 읽지 않는다.
+ */
+export function compileReading(g: Graph, gagneEvents: Pick<GagneData['events'][number], 'id' | 'seq'>[] = []): ReadingData {
   const funcIris = g.instancesOf(R('ReadingFunction'));
   const functions = funcIris.map((f) => ({
     id: shortId(f),
@@ -101,11 +104,16 @@ export function compileReading(g: Graph): ReadingData {
     id: shortId(s),
     label: g.label(s) ?? localName(s).replace(/^Strat_/, '').replace(/_/g, ' '),
     functionIds: funcIris.filter((f) => g.iris(f, R('hasStrategy')).includes(s)).map(shortId),
-    procedure: [],
-    suitableTextTypeIds: [],
-    recommendedEvents: [],
-    minutes: null,
-    reviewStatus: 'draft' as const,
+    // 가이드 §5.3 확장 속성 — 원본 TTL에는 없고, 관리자 화면에서 채운 뒤 TTL로 내보내면 들어온다
+    procedure: g.literals(s, R('procedure')),
+    suitableTextTypeIds: g.iris(s, R('suitableTextType')).map(shortId),
+    recommendedEvents: g
+      .iris(s, R('recommendedEvent'))
+      .map((e) => gagneEvents.find((x) => x.id === shortId(e))?.seq)
+      .filter((n): n is number => typeof n === 'number'),
+    minutes: toInt(g.literal(s, R('minutes'))),
+    reviewStatus: (g.literal(s, R('reviewStatus')) === 'reviewed' ? 'reviewed' : 'draft') as 'draft' | 'reviewed',
+    worksheetHint: g.literal(s, R('worksheetHint')) ?? '',
   }));
   return { functions, verbs, strategies };
 }
@@ -185,6 +193,10 @@ function req(v: string | undefined, where: string): string {
 }
 function fail(msg: string): never {
   throw new Error(msg);
+}
+function toInt(v: string | undefined): number | null {
+  const n = v === undefined ? NaN : Number(v);
+  return Number.isInteger(n) && n > 0 ? n : null;
 }
 function uniq<T>(xs: T[]): T[] {
   return [...new Set(xs)];

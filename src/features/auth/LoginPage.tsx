@@ -2,6 +2,7 @@ import { useState, type FormEvent } from 'react';
 import { Link, Navigate, useNavigate } from 'react-router-dom';
 import { homePathFor, useAuth, useServices } from '../../app/AuthContext';
 import { Alert, Button, Field, errorMessage } from '../../components/ui';
+import { config } from '../../lib/config';
 import { LOGIN_ID_PATTERN } from '../../lib/data/types';
 import AuthShell from './AuthShell';
 
@@ -46,6 +47,28 @@ export default function LoginPage() {
         처음 사용하시나요? <Link to="/signup" className="font-medium text-amber-800 underline">가입 신청</Link>
       </p>
       <p className="mt-2 text-xs text-stone-500">비밀번호를 잊었으면 관리자에게 문의하세요.</p>
+      {config.demo && config.dataMode === 'local' && (
+        <aside className="mt-8 rounded-md border border-amber-200 bg-amber-50 p-4 text-sm" aria-label="체험용 계정">
+          <p className="font-semibold text-amber-900">체험판 안내</p>
+          <p className="mt-1 text-stone-700">아래 계정으로 바로 들어가 볼 수 있습니다. 입력한 내용은 지금 쓰는 브라우저에만 저장됩니다.</p>
+          <table className="mt-3 w-full text-left">
+            <tbody>
+              <tr>
+                <th className="py-0.5 pr-2 font-medium">관리자</th>
+                <td><code>admin01</code> / <code>admin1234</code></td>
+              </tr>
+              <tr>
+                <th className="py-0.5 pr-2 font-medium">교사</th>
+                <td><code>teacher01</code> / <code>teacher1234</code></td>
+              </tr>
+              <tr>
+                <th className="py-0.5 pr-2 font-medium">가입 코드</th>
+                <td><code>film2026</code></td>
+              </tr>
+            </tbody>
+          </table>
+        </aside>
+      )}
     </AuthShell>
   );
 }
