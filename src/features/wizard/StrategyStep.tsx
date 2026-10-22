@@ -11,6 +11,8 @@ import type { StandardNode } from '../../lib/validation/schemas';
 import { useWizard } from './state';
 
 const MAX_PICK = 3;
+/** 전략 추천 이유 캐시 (이 탭을 닫을 때까지) */
+const REASON_CACHE = new Map<string, Record<string, string>>();
 
 export function StrategyDetail({ catalog, id }: { catalog: Catalog; id: string }) {
   const s = catalog.strategy(id);
@@ -64,14 +66,25 @@ export default function StrategyStep({ onNext }: { onNext: () => void }) {
 
   useEffect(() => {
     if (rec.candidates.length === 0) return setReasons({});
+    // 같은 자료·같은 후보면 다시 부르지 않는다 (단계를 오갈 때마다 AI 한도를 쓰지 않게)
+    const key = `${w.material?.title ?? ''}|${rec.candidates.map((c) => c.id).join(',')}`;
+    const cached = REASON_CACHE.get(key);
+    if (cached) return setReasons(cached);
+    let alive = true;
     ai
       .explainStrategies({
         context: ctx,
         materialTitle: w.material?.title ?? '',
         candidates: rec.candidates.map((c) => ({ id: c.id, label: c.label, functionLabels: c.functionIds.map((f) => catalog.functionLabel(f)), matched: c.matched })),
       })
-      .then((r) => setReasons(r.reasons))
-      .catch(() => setReasons({}));
+      .then((r) => {
+        REASON_CACHE.set(key, r.reasons);
+        if (alive) setReasons(r.reasons);
+      })
+      .catch(() => alive && setReasons({}));
+    return () => {
+      alive = false;
+    };
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [rec]);
 
