@@ -1,6 +1,6 @@
 # 배포 (가이드 Phase 10): main에 들어오면 테스트 → 빌드 → 두 곳에 배포
-#  - GitHub Pages: https://inbluewater-dev.github.io/film-reading-lesson/
-#  - Firebase 호스팅: https://film-reading-lesson.web.app (Secrets에 FIREBASE_SERVICE_ACCOUNT_FILM_READING_LESSON가 있을 때만)
+#  - GitHub Pages: https://<GitHub아이디>.github.io/<저장소이름>/
+#  - Firebase 호스팅: https://<프로젝트ID>.web.app (Secrets에 FIREBASE_SERVICE_ACCOUNT_… 이 있을 때만 — firebase init hosting:github이 만듦)
 # 필요한 저장소 Secrets: VITE_FIREBASE_API_KEY, VITE_FIREBASE_AUTH_DOMAIN, VITE_FIREBASE_PROJECT_ID, VITE_FIREBASE_APP_ID, VITE_RECAPTCHA_SITE_KEY
 # (docs/DEPLOY.md 참고. 디버그 토큰은 넣지 않는다)
 name: 배포 (GitHub Pages · Firebase 호스팅)
@@ -72,26 +72,34 @@ jobs:
   firebase-hosting:
     needs: build
     runs-on: ubuntu-latest
-    env:
-      HAS_SERVICE_ACCOUNT: ${{ secrets.FIREBASE_SERVICE_ACCOUNT_FILM_READING_LESSON != '' }}
     steps:
-      - name: 준비 확인
-        if: env.HAS_SERVICE_ACCOUNT != 'true'
-        run: echo "::notice::Firebase 호스팅 자동 배포는 아직 꺼져 있습니다. docs/DEPLOY.md '7. Firebase 호스팅'을 보고 서비스 계정 Secret을 만드세요."
+      # 포크한 저장소에서도 쓸 수 있게: `firebase init hosting:github`이 만든 FIREBASE_SERVICE_ACCOUNT_<프로젝트> 시크릿을 이름과 상관없이 찾는다
+      - name: 서비스 계정 찾기
+        env:
+          ALL_SECRETS: ${{ toJSON(secrets) }}
+        run: |
+          sa=$(echo "$ALL_SECRETS" | jq -r 'to_entries | map(select(.key | startswith("FIREBASE_SERVICE_ACCOUNT"))) | first | .value // empty')
+          if [ -z "$sa" ]; then
+            echo "::notice::Firebase 호스팅 자동 배포는 꺼져 있습니다. 매뉴얼 9단계(선택)의 npx firebase-tools init hosting:github 를 실행하면 켜집니다."
+            echo "HAS_SA=false" >> "$GITHUB_ENV"
+          else
+            echo "HAS_SA=true" >> "$GITHUB_ENV"
+            { echo "FIREBASE_SA<<__SA_EOF__"; echo "$sa"; echo "__SA_EOF__"; } >> "$GITHUB_ENV"
+          fi
       - uses: actions/checkout@v4
-        if: env.HAS_SERVICE_ACCOUNT == 'true'
+        if: env.HAS_SA == 'true'
       - uses: actions/setup-node@v4
-        if: env.HAS_SERVICE_ACCOUNT == 'true'
+        if: env.HAS_SA == 'true'
         with:
           node-version: 22
           cache: npm
-      - if: env.HAS_SERVICE_ACCOUNT == 'true'
+      - if: env.HAS_SA == 'true'
         run: npm ci
       - name: Firebase 호스팅 배포 (빌드는 firebase.json predeploy가 함)
-        if: env.HAS_SERVICE_ACCOUNT == 'true'
+        if: env.HAS_SA == 'true'
         uses: FirebaseExtended/action-hosting-deploy@v0
         with:
           repoToken: ${{ secrets.GITHUB_TOKEN }}
-          firebaseServiceAccount: ${{ secrets.FIREBASE_SERVICE_ACCOUNT_FILM_READING_LESSON }}
-          projectId: film-reading-lesson
+          firebaseServiceAccount: ${{ env.FIREBASE_SA }}
+          projectId: ${{ secrets.VITE_FIREBASE_PROJECT_ID }}
           channelId: live
